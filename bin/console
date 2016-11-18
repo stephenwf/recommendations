@@ -1,0 +1,19 @@
+#!/usr/bin/env php
+<?php
+require_once __DIR__.'/../vendor/autoload.php';
+set_time_limit(0);
+
+use eLife\App\Console;
+use eLife\App\Kernel;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Input\ArgvInput;
+
+$input = new ArgvInput();
+$env = $input->getParameterOption(array('--env', '-e'), getenv('SYMFONY_ENV') ?: 'local');
+if (!file_exists(__DIR__.'/../config/'.$env.'.php')) {
+    die('Environment `'.$env.'` not found.');
+}
+$config = require __DIR__.'/../config/'.$env.'.php';
+$app = new Kernel($config);
+$console = new Console(new Application('eLife Recommendations'), $app);
+$console->run();
