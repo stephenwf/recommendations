@@ -15,3 +15,17 @@ RUN composer self-update 1.0.0-beta2
 RUN echo 'date.timezone = "Europe/London"' >> /usr/local/etc/php/conf.d/php.ini
 RUN docker-php-ext-install zip
 
+COPY ./recommendations/composer.json /recommendations/composer.json
+COPY ./recommendations/composer.lock /recommendations/composer.lock
+RUN cd /recommendations && composer install --no-scripts --no-autoloader --no-interaction --no-dev
+
+COPY ./recommendations /recommendations
+
+COPY ./docker/config/recommendations.php /recommendations/config/local.php
+
+RUN cd /recommendations && composer install --no-interaction --no-dev
+
+RUN mkdir -p /recommendations/cache && \
+    chmod 777 /recommendations/cache -R
+
+WORKDIR /recommendations
