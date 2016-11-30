@@ -1,8 +1,12 @@
 <?php
 
-namespace eLife\Recommendations;
+namespace eLife\Recommendations\Rule;
 
-interface Rule
+use eLife\Recommendations\Relationship;
+use eLife\Recommendations\Rule;
+use eLife\Recommendations\RuleModel;
+
+final class MostRecent implements Rule
 {
     /**
      * Resolve Relations.
@@ -14,7 +18,10 @@ interface Rule
      * added and `on` is the target node. In plain english given a podcast containing articles it would
      * return an array where the podcast is every `input` and each article is the `output`.
      */
-    public function resolveRelations(RuleModel $input) : array;
+    public function resolveRelations(RuleModel $input): array
+    {
+        // TODO: Implement resolveRelations() method.
+    }
 
     /**
      * Upsert relations.
@@ -22,7 +29,10 @@ interface Rule
      * Given an `input` and an `on` it will persist this relationship for retrieval
      * in recommendation results.
      */
-    public function upsert(Relationship $relationship);
+    public function upsert(Relationship $relationship)
+    {
+        // TODO: Implement upsert() method.
+    }
 
     /**
      * Prune relations.
@@ -31,7 +41,10 @@ interface Rule
      * for this given `input`. Its possible some logic will be shared with resolve relations, but this is up
      * to each implementation.
      */
-    public function prune(RuleModel $input);
+    public function prune(RuleModel $input)
+    {
+        // TODO: Implement prune() method.
+    }
 
     /**
      * Add relations for model to list.
@@ -40,5 +53,8 @@ interface Rule
      * of [type, id]'s that will be hydrated into results by the application. The aim is for this function to be
      * as fast as possible given its executed at run-time.
      */
-    public function addRelations(RuleModel $model, array $list) : array;
+    public function addRelations(RuleModel $model, array $list): array
+    {
+        // TODO: Implement addRelations() method.
+    }
 }
