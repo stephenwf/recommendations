@@ -26,10 +26,15 @@ final class Hydration
     private function hydrateOne(RuleModel $model)
     {
         // @todo implementation.
-        // Returns API SDK model.
+        // Returns one of our request models.
         return $model;
     }
 
+    /**
+     * @param array $rules
+     *
+     * @return array
+     */
     public function hydrateAll(array $rules) : array
     {
         Assertion::allIsInstanceOf(RuleModel::class, $rules);

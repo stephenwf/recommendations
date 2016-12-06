@@ -12,6 +12,7 @@ namespace {
     require_once __DIR__ . '/../vendor/elife/api-sdk/test/PuliAwareTestCase.php';
     require_once __DIR__ . '/../vendor/elife/api-sdk/test/ApiTestCase.php';
     require_once __DIR__ . '/../vendor/elife/api-sdk/test/ApiSdkTest.php';
+    require_once __DIR__ . '/../vendor/elife/api-sdk/test/Builder.php';
     require_once __DIR__ . '/../vendor/elife/api-sdk/test/Serializer/BlogArticleNormalizerTest.php';
     require_once __DIR__ . '/../vendor/elife/api-sdk/test/Serializer/ArticlePoANormalizerTest.php';
     require_once __DIR__ . '/../vendor/elife/api-sdk/test/Serializer/ArticleVoRNormalizerTest.php';
@@ -26,6 +27,9 @@ namespace {
         }
 
         define('GEARMAN_SUCCESS', 'GEARMAN_SUCCESS');
+    }
+    function dpm($json) {
+        var_dump(json_encode(json_decode($json), JSON_PRETTY_PRINT));exit;
     }
 }
 
