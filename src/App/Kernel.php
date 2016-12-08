@@ -3,6 +3,7 @@
 namespace eLife\App;
 
 use Closure;
+use Dflydev\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\Common\Annotations\CachedReader;
@@ -18,6 +19,7 @@ use eLife\Recommendations\Rule\CollectionContents;
 use eLife\Recommendations\Rule\MostRecent;
 use eLife\Recommendations\Rule\MostRecentWithSubject;
 use eLife\Recommendations\Rule\PodcastEpisodeContents;
+use eLife\Recommendations\RuleModelRepository;
 use GuzzleHttp\Client;
 use GuzzleHttp\HandlerStack;
 use JMS\Serializer\EventDispatcher\EventDispatcher;
@@ -28,7 +30,9 @@ use Kevinrob\GuzzleCache\Storage\DoctrineCacheStorage;
 use Kevinrob\GuzzleCache\Strategy\PublicCacheStrategy;
 use Silex\Application;
 use Silex\Provider;
+use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\VarDumperServiceProvider;
+use Sorien\Provider\DoctrineProfilerServiceProvider;
 use Symfony\Bridge\PsrHttpMessage\Factory\DiactorosFactory;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -56,6 +60,15 @@ final class Kernel implements MinimalKernel
             'validate' => false,
             'annotation_cache' => true,
             'ttl' => 3600,
+            'db' => array_merge([
+                'driver' => 'pdo_mysql',
+                'host' => '127.0.0.1',
+                'port' => '3306',
+                'dbname' => 'recommendations',
+                'user' => 'eLife',
+                'password' => '',
+                'charset' => 'utf8mb4',
+            ], $config['db'] ?? []),
         ], $config);
         // Annotations.
         AnnotationRegistry::registerAutoloadNamespace(
@@ -70,7 +83,32 @@ final class Kernel implements MinimalKernel
                 'profiler.cache_dir' => self::ROOT.'/cache/profiler',
                 'profiler.mount_prefix' => '/_profiler', // this is the default
             ]);
+            $app->register(new DoctrineProfilerServiceProvider());
         }
+
+        $app->register(new DoctrineServiceProvider(), array(
+            'db.options' => $app['config']['db'],
+        ));
+
+//        $app->register(new DoctrineOrmServiceProvider, array(
+//            'orm.proxies_dir' => '/path/to/proxies',
+//            'orm.em.options' => array(
+//                'mappings' => array(
+//                    // Using actual filesystem paths
+//                    array(
+//                        'type' => 'annotation',
+//                        'namespace' => 'Foo\Entities',
+//                        'path' => __DIR__.'/src/Foo/Entities',
+//                    ),
+//                    array(
+//                        'type' => 'xml',
+//                        'namespace' => 'Bat\Entities',
+//                        'path' => __DIR__.'/src/Bat/Resources/mappings',
+//                    ),
+//                ),
+//            ),
+//        ));
+
         // DI.
         $this->dependencies($app);
         // Add to class once set up.
@@ -134,22 +172,25 @@ final class Kernel implements MinimalKernel
                 new JsonDecoder()
             );
         };
+        $app['rules.repository'] = function (Application $app) {
+            return new RuleModelRepository($app['db']);
+        };
 
         //#####################################################
         // ------------------ Rule Process --------------------
         //#####################################################
         $app['rules.process'] = function (Application $app) {
             return new Rules(
-                /* 1 */ new BidirectionalRelationship($app['api.sdk'], 'retraction'),
-                /* 2 */ new BidirectionalRelationship($app['api.sdk'], 'correction'),
+                /* 1 */ new BidirectionalRelationship($app['api.sdk'], 'retraction', $app['rules.repository']),
+                /* 2 */ new BidirectionalRelationship($app['api.sdk'], 'correction', $app['rules.repository']),
                 /* 3 is part of BidirectionalRelationship. */
-                /* 4 */ new BidirectionalRelationship($app['api.sdk'], 'research-article'),
-                /* 5 */ new BidirectionalRelationship($app['api.sdk'], 'research-exchange'),
-                /* 6 */ new BidirectionalRelationship($app['api.sdk'], 'research-advance'),
-                /* 7 */ new BidirectionalRelationship($app['api.sdk'], 'tools-resources'),
-                /* 8 */ new BidirectionalRelationship($app['api.sdk'], 'feature'),
-                /* 9 */ new BidirectionalRelationship($app['api.sdk'], 'insight'),
-                /* 10 */ new BidirectionalRelationship($app['api.sdk'], 'editorial'),
+                /* 4 */ new BidirectionalRelationship($app['api.sdk'], 'research-article', $app['rules.repository']),
+                /* 5 */ new BidirectionalRelationship($app['api.sdk'], 'research-exchange', $app['rules.repository']),
+                /* 6 */ new BidirectionalRelationship($app['api.sdk'], 'research-advance', $app['rules.repository']),
+                /* 7 */ new BidirectionalRelationship($app['api.sdk'], 'tools-resources', $app['rules.repository']),
+                /* 8 */ new BidirectionalRelationship($app['api.sdk'], 'feature', $app['rules.repository']),
+                /* 9 */ new BidirectionalRelationship($app['api.sdk'], 'insight', $app['rules.repository']),
+                /* 10 */ new BidirectionalRelationship($app['api.sdk'], 'editorial', $app['rules.repository']),
                 /* 11 */ new CollectionContents($app['api.sdk']),
                 /* 12 */ new PodcastEpisodeContents($app['api.sdk']),
                 /* 13 */ new MostRecent(),

@@ -3,6 +3,9 @@
 namespace eLife\App;
 
 use Closure;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\MySQL57Platform;
+use Doctrine\DBAL\Schema\Schema;
 use Exception;
 use LogicException;
 use Psr\Log\LoggerInterface;
@@ -12,6 +15,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Question\Question;
+use Throwable;
 
 final class Console
 {
@@ -27,15 +31,25 @@ final class Console
         'echo' => ['description' => 'Example of asking a question'],
         'cache:clear' => ['description' => 'Clears cache'],
         'debug:params' => ['description' => 'Lists current parameters'],
+        'generatedatabase' => ['description' => 'Generates Database'],
     ];
+
+    /** @var Connection */
+    private $db;
 
     public function __construct(Application $console, Kernel $app)
     {
         $this->console = $console;
         $this->app = $app;
         $this->root = __DIR__.'/../..';
+        $this->setDb($app->get('db'));
 
         $this->console->getDefinition()->addOption(new InputOption('--env', '-e', InputOption::VALUE_REQUIRED, 'The Environment name.', 'dev'));
+    }
+
+    private function setDb(Connection $connection)
+    {
+        $this->db = $connection;
     }
 
     private function path($path = '')
@@ -90,6 +104,39 @@ final class Console
     {
         $logger->info('Hello from the outside (of the global scope)');
         $logger->debug('This is working');
+    }
+
+    public function generatedatabaseCommand(InputInterface $input, OutputInterface $output, LoggerInterface $logger)
+    {
+        $schema = new Schema();
+        $rules = $schema->createTable('Rules');
+        $rules->addColumn('rule_id', 'guid');
+        $rules->addColumn('id', 'string', ['length' => 64]);
+        $rules->addColumn('type', 'string', ['length' => 64]);
+        $rules->addColumn('published', 'datetime', ['notnull' => false]); // Nullable.
+        $rules->addColumn('isSynthetic', 'boolean', ['default' => false]);
+        $rules->setPrimaryKey(['rule_id']);
+
+        $references = $schema->createTable('References');
+        $references->addColumn('on_id', 'guid');
+        $references->addColumn('subject_id', 'guid');
+        $references->setPrimaryKey(['on_id', 'subject_id']);
+        $references->addForeignKeyConstraint($rules, ['on_id'], ['rule_id'], ['onUpdate' => 'CASCADE']);
+        $references->addForeignKeyConstraint($rules, ['subject_id'], ['rule_id'], ['onUpdate' => 'CASCADE']);
+
+        $drops = $schema->toDropSql(new MySQL57Platform());
+        $arrayOfSqlQueries = array_merge($drops, $schema->toSql(new MySQL57Platform()));
+
+        foreach ($arrayOfSqlQueries as $query) {
+            try {
+                $this->db->exec($query);
+            } catch (Throwable $e) {
+                $logger->error($e->getMessage(), ['exception' => $e]);
+
+                return;
+            }
+        }
+        $logger->debug('Database created successfully.');
     }
 
     public function run()
