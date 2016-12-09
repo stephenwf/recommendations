@@ -14,6 +14,7 @@ final class RulesTest extends PHPUnit_Framework_TestCase
 {
     private $rule1;
     private $rule2;
+    private $rule_empty;
 
     public function setUp()
     {
@@ -23,12 +24,19 @@ final class RulesTest extends PHPUnit_Framework_TestCase
             ->andReturnUsing(function ($_, $in) {
                 return array_merge($in, [['type' => 'podcast-episode', 'id' => 1]]);
             });
+        $this->rule1
+            ->shouldReceive('supports')
+            ->andReturn(['podcast-episode']);
         $this->rule2 = Mockery::mock(Rule::class);
+        $this->rule2
+            ->shouldReceive('supports')
+            ->andReturn(['article']);
         $this->rule2
             ->shouldReceive('addRelations')
             ->andReturnUsing(function ($_, $in) {
                 return array_merge($in, [['type' => 'article', 'id' => 2]]);
             });
+        $this->rule_empty = Mockery::mock(Rule::class);
     }
 
     public function testAggregatingAddRelations()
@@ -49,35 +57,53 @@ final class RulesTest extends PHPUnit_Framework_TestCase
 
     public function testImport()
     {
-        $this->rule1
+        $this->rule2
             ->shouldReceive('resolveRelations')
             ->andReturn([new ManyToManyRelationship(new RuleModel('2', 'article'), new RuleModel('1', 'article'))])
             ->once();
-        $this->rule1
+        $this->rule2
             ->shouldReceive('upsert')
             ->andReturn(null)
             ->once();
-        $rules = new Rules($this->rule1);
+        $rules = new Rules($this->rule2);
         $rules->import(new RuleModel('1', 'article'), true);
+    }
+
+    public function testEmpty()
+    {
+        $this->rule_empty
+            ->shouldReceive('supports')
+            ->andReturn([]);
+        $this->rule_empty
+            ->shouldReceive('resolveRelations')
+            ->never();
+        $this->rule_empty
+            ->shouldReceive('upsert')
+            ->never();
+        $rules = new Rules($this->rule_empty);
+        $rules->import(new RuleModel('1', 'not-article'), true);
     }
 
     public function testImportWithoutUpsert()
     {
-        $this->rule1
+        $this->rule2
             ->shouldReceive('resolveRelations')
             ->andReturn([new ManyToManyRelationship(new RuleModel('2', 'article'), new RuleModel('1', 'article'))])
             ->once();
-        $this->rule1
+        $this->rule2
             ->shouldReceive('upsert')
             ->never();
-        $rules = new Rules($this->rule1);
+        $rules = new Rules($this->rule2);
         $rules->import(new RuleModel('1', 'article'), false);
     }
 
     public function testImportWithoutUpsertAndPruneWillFail()
     {
+        $this->rule2
+            ->shouldReceive('supports')
+            ->andReturn(['article']);
         $this->expectException(LogicException::class);
-        $rules = new Rules($this->rule1);
+        $rules = new Rules($this->rule2);
         $rules->import(new RuleModel('1', 'article'), false, true);
     }
 }

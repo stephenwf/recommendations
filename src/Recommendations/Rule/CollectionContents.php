@@ -25,7 +25,7 @@ final class CollectionContents implements Rule
 
     public function getCollection(string $id)
     {
-        return $this->sdk->collections()->get($id);
+        return $this->sdk->collections()->get($id)->wait(true);
     }
 
     /**
@@ -72,5 +72,15 @@ final class CollectionContents implements Rule
     protected function getRepository(): RuleModelRepository
     {
         return $this->repo;
+    }
+
+    /**
+     * Returns item types that are supported by rule.
+     */
+    public function supports(): array
+    {
+        return [
+            'collection',
+        ];
     }
 }

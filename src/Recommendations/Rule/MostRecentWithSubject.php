@@ -3,14 +3,16 @@
 namespace eLife\Recommendations\Rule;
 
 use eLife\ApiSdk\ApiSdk;
+use eLife\ApiSdk\Collection;
 use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\ApiSdk\Model\Subject;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule;
 use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
+use eLife\Sdk\Article;
 
-final class MostRecentWithSubject implements Rule
+class MostRecentWithSubject implements Rule
 {
     use GetSdk;
     use PersistRule;
@@ -64,5 +66,28 @@ final class MostRecentWithSubject implements Rule
     protected function getRepository(): RuleModelRepository
     {
         return $this->repo;
+    }
+
+    /**
+     * Returns item types that are supported by rule.
+     */
+    public function supports(): array
+    {
+        return [
+            'collection',
+            'podcast-episode',
+            'correction',
+            'editorial',
+            'feature',
+            'insight',
+            'research-advance',
+            'research-article',
+            'research-exchange',
+            'retraction',
+            'registered-report',
+            'replication-study',
+            'short-report',
+            'tools-resources',
+        ];
     }
 }

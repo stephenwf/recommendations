@@ -12,7 +12,7 @@ namespace eLife\Recommendations\Process;
 
 use eLife\Recommendations\Rule;
 use eLife\Recommendations\RuleModel;
-use MongoDB\Driver\Exception\LogicException;
+use LogicException;
 
 final class Rules
 {
@@ -23,9 +23,17 @@ final class Rules
         $this->rules = $rules;
     }
 
+    public function isSupported(RuleModel $model, Rule $rule)
+    {
+        return in_array($model->getType(), $rule->supports());
+    }
+
     public function import(RuleModel $model, bool $upsert = true, bool $prune = false)
     {
         foreach ($this->rules as $rule) {
+            if ($this->isSupported($model, $rule) === false) {
+                continue;
+            }
             $relations = $rule->resolveRelations($model);
             if ($upsert) {
                 foreach ($relations as $relation) {

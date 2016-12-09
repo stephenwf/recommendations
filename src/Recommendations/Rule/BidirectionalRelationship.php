@@ -11,7 +11,7 @@ use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
 use eLife\Sdk\Article;
 
-final class BidirectionalRelationship implements Rule
+class BidirectionalRelationship implements Rule
 {
     use PersistRule;
 
@@ -81,5 +81,26 @@ final class BidirectionalRelationship implements Rule
     protected function getRepository(): RuleModelRepository
     {
         return $this->repo;
+    }
+
+    /**
+     * Returns item types that are supported by rule.
+     */
+    public function supports(): array
+    {
+        return [
+            'correction',
+            'editorial',
+            'feature',
+            'insight',
+            'research-advance',
+            'research-article',
+            'research-exchange',
+            'retraction',
+            'registered-report',
+            'replication-study',
+            'short-report',
+            'tools-resources',
+        ];
     }
 }
