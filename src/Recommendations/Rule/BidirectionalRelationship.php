@@ -2,31 +2,41 @@
 
 namespace eLife\Recommendations\Rule;
 
-use DateTimeImmutable;
 use eLife\ApiSdk\ApiSdk;
 use eLife\ApiSdk\Model\Article;
+use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\ApiSdk\Model\ExternalArticle as ExternalArticleModel;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule;
 use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
+use Psr\Log\LoggerInterface;
 
 class BidirectionalRelationship implements Rule
 {
     use PersistRule;
+    use RepoRelations;
 
     private $sdk;
     private $type;
     private $repo;
+    private $logger;
 
     public function __construct(
         ApiSdk $sdk,
         string $type,
-        RuleModelRepository $repo
+        RuleModelRepository $repo,
+        LoggerInterface $logger = null
     ) {
         $this->sdk = $sdk;
         $this->type = $type;
         $this->repo = $repo;
+        $this->logger = $logger;
+    }
+
+    public function setLogger(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
     }
 
     protected function getArticle(string $id): Article
@@ -47,44 +57,33 @@ class BidirectionalRelationship implements Rule
      */
     public function resolveRelations(RuleModel $input): array
     {
+        $this->logger->debug('Starting to resolve relations for article with id '.$input->getId());
         $article = $this->getArticle($input->getId());
+        if ($article instanceof ExternalArticleModel) {
+            $this->logger->warning('We cannot process external article at this time.');
+
+            return [];
+        }
         $related = $article->getRelatedArticles();
+        $this->logger->debug('Found related articles ('.$related->count().')');
         $type = $this->type;
+        $this->logger->debug('Starting to loop through articles');
 
         return $related
+            ->filter(function ($item) {
+                return $item instanceof ArticleVersion;
+            })
             ->filter(function (Article $article) use ($type) {
-                if ($article instanceof ExternalArticleModel) {
-                    return $type === 'external-article';
-                }
+                $this->logger->debug('Found related article id: '.$article->getId().' and type: '.$type);
 
                 return $article->getType() === $type;
             })
             ->map(function (Article $article) use ($input) {
+                $this->logger->debug('Mapping to relation '.$input->getId());
+
                 return new ManyToManyRelationship($input, new RuleModel($article->getId(), $article->getType(), $article->getPublishedDate()));
             })
             ->toArray();
-    }
-
-    /**
-     * Add relations for model to list.
-     *
-     * This will be what is used when constructing the recommendations. Given a model (id, type) we return an array
-     * of [type, id]'s that will be hydrated into results by the application. The aim is for this function to be
-     * as fast as possible given its executed at run-time.
-     */
-    public function addRelations(RuleModel $model, array $list): array
-    {
-        $type = $model->getType(); // Convert this into database name
-        $id = $model->getId(); // Query that database with the type + ID
-        // Get the results and make some new RuleModels
-        $list[] = new RuleModel('12445', 'research-article', new DateTimeImmutable());
-
-        return $list;
-    }
-
-    protected function getRepository(): RuleModelRepository
-    {
-        return $this->repo;
     }
 
     /**
