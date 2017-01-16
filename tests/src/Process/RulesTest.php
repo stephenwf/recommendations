@@ -6,7 +6,6 @@ use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule;
 use eLife\Recommendations\RuleModel;
-use LogicException;
 use Mockery;
 use PHPUnit_Framework_TestCase;
 
