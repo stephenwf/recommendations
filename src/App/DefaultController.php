@@ -61,4 +61,9 @@ final class DefaultController
             'Content-Type' => (string) (new MediaType(self::MEDIA_TYPE, $version)),
         ]);
     }
+
+    public function pingAction()
+    {
+        return 'pong';
+    }
 }
