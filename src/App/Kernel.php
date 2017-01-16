@@ -305,6 +305,7 @@ final class Kernel implements MinimalKernel
 
     public function handleException($e): Response
     {
+        return $response;
     }
 
     public function withApp(callable $fn)
