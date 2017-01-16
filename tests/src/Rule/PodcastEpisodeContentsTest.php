@@ -3,7 +3,6 @@
 namespace tests\eLife\Rule;
 
 use eLife\ApiSdk\Model\PodcastEpisode as PodcastEpisodeModel;
-use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule\PodcastEpisodeContents;
 use eLife\Recommendations\RuleModel;
 use PHPUnit_Framework_TestCase;
@@ -11,6 +10,8 @@ use test\eLife\ApiSdk\Serializer\PodcastEpisodeNormalizerTest;
 
 class PodcastEpisodeContentsTest extends PHPUnit_Framework_TestCase
 {
+    use ValidRelationAssertion;
+
     /**
      * @dataProvider getPodcastData
      */
@@ -24,15 +25,7 @@ class PodcastEpisodeContentsTest extends PHPUnit_Framework_TestCase
 
         $relations = $mock->resolveRelations(new RuleModel('1', 'article'));
         foreach ($relations as $relation) {
-            /* @var ManyToManyRelationship $relation */
-            $this->assertInstanceOf(ManyToManyRelationship::class, $relation);
-            $this->assertNotNull($relation->getOn());
-            $this->assertNotNull($relation->getOn()->getId());
-            $this->assertNotNull($relation->getOn()->getType());
-            $this->assertNotNull($relation->getOn()->getPublished());
-            $this->assertNotNull($relation->getSubject());
-            $this->assertNotNull($relation->getSubject()->getId());
-            $this->assertNotNull($relation->getSubject()->getType());
+            $this->assertValidRelation($relation);
         }
     }
 
