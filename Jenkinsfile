@@ -1,7 +1,8 @@
 elifePipeline {
+    def commit
     stage 'Checkout', {
         checkout scm
-        def commit = elifeGitRevision()
+        commit = elifeGitRevision()
     }
 
     stage 'Project tests', {
