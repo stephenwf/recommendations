@@ -174,10 +174,6 @@ final class Kernel implements MinimalKernel
             return new Monitoring();
         };
 
-        $app['monitoring'] = function () {
-            return new Monitoring();
-        };
-
         /* @internal */
         $app['limit._memory'] = function (Application $app) {
             return MemoryLimit::mb($app['config']['process_memory_limit']);
