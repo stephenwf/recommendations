@@ -27,11 +27,19 @@ final class Console
 
         $this->console
             ->getDefinition()
-            ->addOption(new InputOption('--env', '-e', InputOption::VALUE_REQUIRED, 'The Environment name.', 'dev'))
-        ;
+            ->addOption(new InputOption('--env', '-e', InputOption::VALUE_REQUIRED, 'The Environment name.', 'dev'));
 
         // Add custom commands.
-        $this->console->add(new PopulateRulesCommand($app->get('api.sdk'), $app->get('rules.repository'), $app->get('rules.process'), $app->get('logger')));
+        $this->console->add(
+            new PopulateRulesCommand(
+                $app->get('api.sdk'),
+                $app->get('rules.repository'),
+                $app->get('rules.process'),
+                $app->get('logger'),
+                $app->get('monitoring'),
+                $app->get('limit.interactive')
+            )
+        );
         $this->console->add(new GenerateDatabaseCommand($app->get('db'), $app->get('logger')));
         $this->logger = $app->get('logger');
     }

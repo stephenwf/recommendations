@@ -8,13 +8,17 @@
 namespace eLife\Api\Command;
 
 use eLife\ApiSdk\ApiSdk;
+use eLife\Bus\Limit\Limit;
+use eLife\Bus\Monitoring;
+use Iterator;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
-use Traversable;
 
 abstract class PopulateCommand extends Command
 {
@@ -22,14 +26,21 @@ abstract class PopulateCommand extends Command
     private $serializer;
     private $output;
     protected $logger;
+    /** @var Limit */
+    protected $limit;
+    private $monitoring;
 
     public function __construct(
         ApiSdk $sdk,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        Monitoring $monitoring,
+        callable $limit
     ) {
         $this->serializer = $sdk->getSerializer();
         $this->sdk = $sdk;
         $this->logger = $logger;
+        $this->monitoring = $monitoring;
+        $this->limit = $limit;
 
         parent::__construct(null);
     }
@@ -79,63 +90,79 @@ abstract class PopulateCommand extends Command
     {
         $this->logger->info('Importing Podcast Episodes');
         $episodes = $this->sdk->podcastEpisodes();
-        $this->iterateSerializeTask($episodes, 'podcast-episode');
+        $this->iterateSerializeTask($episodes, 'podcast-episode', $episodes->count());
     }
 
     public function importCollections()
     {
         $this->logger->info('Importing Collections');
         $collections = $this->sdk->collections();
-        $this->iterateSerializeTask($collections, 'collection');
+        $this->iterateSerializeTask($collections, 'collection', $collections->count());
     }
 
     public function importLabsExperiments()
     {
         $this->logger->info('Importing Labs Experiments');
-        $events = $this->sdk->labsExperiments();
-        $this->iterateSerializeTask($events, 'labs-experiment');
+        $experiments = $this->sdk->labsExperiments();
+        $this->iterateSerializeTask($experiments, 'labs-experiment', $experiments->count());
     }
 
     public function importResearchArticles()
     {
         $this->logger->info('Importing Research Articles');
-        $events = $this->sdk->articles();
-        $this->iterateSerializeTask($events, 'research-article');
+        $articles = $this->sdk->articles();
+        $this->iterateSerializeTask($articles, 'research-article', $articles->count());
     }
 
     public function importInterviews()
     {
         $this->logger->info('Importing Interviews');
-        $events = $this->sdk->interviews();
-        $this->iterateSerializeTask($events, 'interview');
+        $interviews = $this->sdk->interviews();
+        $this->iterateSerializeTask($interviews, 'interview', $interviews->count());
     }
 
     public function importEvents()
     {
         $this->logger->info('Importing Events');
         $events = $this->sdk->events();
-        $this->iterateSerializeTask($events, 'event');
+        $this->iterateSerializeTask($events, 'event', $events->count());
     }
 
     public function importBlogArticles()
     {
         $this->logger->info('Importing Blog Articles');
         $articles = $this->sdk->blogArticles();
-        $this->iterateSerializeTask($articles, 'blog-article');
+        $this->iterateSerializeTask($articles, 'blog-article', $articles->count());
     }
 
-    private function iterateSerializeTask(Traversable $items, string $type)
+    private function iterateSerializeTask(Iterator $items, string $type, int $count)
     {
-        $progress = null;
-        foreach ($items as $item) {
+        $this->logger->info("Importing $count items of type $type");
+        $progress = new ProgressBar($this->output, $count);
+        $limit = $this->limit;
+
+        $items->rewind();
+        while ($items->valid()) {
+            if ($limit()) {
+                throw new RuntimeException('Command cannot complete because: '.implode(', ', $limit->getReasons()));
+            }
+            $progress->advance();
             try {
+                $item = $items->current();
+                if ($item === null) {
+                    $items->next();
+                    continue;
+                }
                 $this->processModel($type, $item);
             } catch (Throwable $e) {
-                $this->logger->alert($e->getMessage());
-                $this->logger->warning('Skipping import on a '.get_class($item), ['exception' => $e]);
-                continue;
+                $item = $item ?? null;
+                $this->logger->error('Skipping import on a '.get_class($item), ['exception' => $e]);
+                $this->monitoring->recordException($e, 'Skipping import on a '.get_class($item));
             }
+            $items->next();
         }
+        $progress->finish();
+        $progress->clear();
     }
 
     abstract public function processModel(string $type, $model);

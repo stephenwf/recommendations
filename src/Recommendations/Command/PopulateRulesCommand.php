@@ -5,6 +5,7 @@ namespace eLife\Recommendations\Command;
 use eLife\Api\Command\PopulateCommand;
 use eLife\ApiSdk\ApiSdk;
 use eLife\ApiSdk\Model\PodcastEpisode;
+use eLife\Bus\Monitoring;
 use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
@@ -15,11 +16,18 @@ final class PopulateRulesCommand extends PopulateCommand
     private $repo;
     private $rules;
 
-    public function __construct(ApiSdk $sdk, RuleModelRepository $repo, Rules $rules, LoggerInterface $logger)
-    {
+    public function __construct(
+        ApiSdk $sdk,
+        RuleModelRepository $repo,
+        Rules $rules,
+        LoggerInterface $logger,
+        Monitoring $monitoring,
+        callable $limit
+    ) {
         $this->repo = $repo;
         $this->rules = $rules;
-        parent::__construct($sdk, $logger);
+        $this->limit = $limit;
+        parent::__construct($sdk, $logger, $monitoring, $limit);
     }
 
     protected static function getSupportedModels()
