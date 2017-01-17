@@ -4,7 +4,7 @@ namespace eLife\App;
 
 use Closure;
 use eLife\Recommendations\Command\PopulateRulesCommand;
-use eLife\Recommendations\Command\SchemaCreateCommand;
+use eLife\Recommendations\Command\GenerateDatabaseCommand;
 use Exception;
 use LogicException;
 use Symfony\Component\Console\Application;
@@ -32,7 +32,7 @@ final class Console
 
         // Add custom commands.
         $this->console->add(new PopulateRulesCommand($app->get('api.sdk'), $app->get('rules.repository'), $app->get('rules.process')));
-        $this->console->add(new SchemaCreateCommand($app->get('db'), $app->get('logger')));
+        $this->console->add(new GenerateDatabaseCommand($app->get('db'), $app->get('logger')));
         $this->logger = $app->get('logger');
     }
 

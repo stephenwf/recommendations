@@ -12,7 +12,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
 
-class SchemaCreateCommand extends Command
+class GenerateDatabaseCommand extends Command
 {
     private $db;
     private $logger;
@@ -28,7 +28,7 @@ class SchemaCreateCommand extends Command
     protected function configure()
     {
         $this
-            ->setName('schema:create')
+            ->setName('generate:database')
             ->setDescription('Creates schema for recommendations database.')
             ->addOption('drop', 'd', InputOption::VALUE_NONE)
         ;
