@@ -25,7 +25,8 @@
         "ramsey/uuid": "2.9",
         "sorien/silex-dbal-profiler": "~2.0",
         "symfony/monolog-bridge": "^3.2",
-        "elife/bus-sdk": "dev-master"
+        "elife/bus-sdk": "dev-master",
+        "elife/logging-sdk": "dev-master"
     },
     "autoload": {
         "psr-4": {

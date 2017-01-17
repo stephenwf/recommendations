@@ -83,8 +83,7 @@
         },
         "elife/logging-sdk": {
             "install-path": "vendor/elife/logging-sdk",
-            "installer": "composer",
-            "env": "dev"
+            "installer": "composer"
         },
         "guzzlehttp/guzzle": {
             "install-path": "vendor/guzzlehttp/guzzle",
