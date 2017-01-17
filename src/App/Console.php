@@ -3,7 +3,6 @@
 namespace eLife\App;
 
 use Closure;
-use Doctrine\DBAL\Connection;
 use eLife\Recommendations\Command\PopulateRulesCommand;
 use eLife\Recommendations\Command\SchemaCreateCommand;
 use Exception;
@@ -19,9 +18,6 @@ final class Console
         'cache:clear' => ['description' => 'Clears cache'],
         'debug:params' => ['description' => 'Lists current parameters'],
     ];
-
-    /** @var Connection */
-    private $db;
 
     public function __construct(Application $console, Kernel $app)
     {
