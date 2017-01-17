@@ -3,8 +3,8 @@
 namespace eLife\App;
 
 use Closure;
-use eLife\Recommendations\Command\PopulateRulesCommand;
 use eLife\Recommendations\Command\GenerateDatabaseCommand;
+use eLife\Recommendations\Command\PopulateRulesCommand;
 use Exception;
 use LogicException;
 use Symfony\Component\Console\Application;
