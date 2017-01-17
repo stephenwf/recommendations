@@ -21,7 +21,6 @@ final class MostRecent implements Rule
 
     public function upsert(Relationship $relationship)
     {
-        // TODO: Implement upsert() method.
     }
 
     public function prune(RuleModel $input, array $relationships = null)

@@ -3,6 +3,9 @@
 namespace eLife\Recommendations\Rule;
 
 use eLife\Recommendations\Rule;
+use eLife\Recommendations\Rule\Common\CompoundRule;
+use eLife\Recommendations\Rule\Common\PersistRule;
+use eLife\Recommendations\Rule\Common\RepoRelations;
 use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
 
