@@ -11,4 +11,8 @@ use Symfony\Component\Console\Command\Command;
 
 class QueueCommand extends Command
 {
+    public function __construct($name = null)
+    {
+        parent::__construct($name);
+    }
 }

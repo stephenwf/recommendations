@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "b8f731c9095147ad800298e4017e8570",
-    "content-hash": "b5160ddac8f8f43745c91418dde556a4",
+    "hash": "216fea8f96989fa6e1bdde2e01a78aee",
+    "content-hash": "09723d015f83ef5d79752be71ddd8ea4",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -379,7 +379,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/cache/zipball/e14f7e04cf7106fed6061b42aeeb56df556db49d",
+                "url": "https://api.github.com/repos/doctrine/cache/zipball/315b2f7ad3acca10fa3a1bf65dcf66c03670ff0f",
                 "reference": "e14f7e04cf7106fed6061b42aeeb56df556db49d",
                 "shasum": ""
             },
@@ -909,7 +909,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/elifesciences/api-raml/zipball/ae737c5afd08aa16ed7670a4b9d007cb08959225",
+                "url": "https://api.github.com/repos/elifesciences/api-raml/zipball/7b0bae7116d018eac2aa4e89e33190de70fe61d2",
                 "reference": "ae737c5afd08aa16ed7670a4b9d007cb08959225",
                 "shasum": ""
             },
@@ -989,7 +989,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/elifesciences/api-sdk-php/zipball/a12f3b4c68518a542be8f947f1ecf3cec853f69e",
+                "url": "https://api.github.com/repos/elifesciences/api-sdk-php/zipball/65628753924d61c98d10efff34578f7b4600e6fd",
                 "reference": "a12f3b4c68518a542be8f947f1ecf3cec853f69e",
                 "shasum": ""
             },
@@ -1073,6 +1073,43 @@
             ],
             "description": "eLife Sciences API validator",
             "time": "2016-09-19 06:27:04"
+        },
+        {
+            "name": "elife/bus-sdk",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/elifesciences/bus-sdk-php.git",
+                "reference": "f97cfb8f7cbca400742d00808031e78b60badd78"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/elifesciences/bus-sdk-php/zipball/f97cfb8f7cbca400742d00808031e78b60badd78",
+                "reference": "f97cfb8f7cbca400742d00808031e78b60badd78",
+                "shasum": ""
+            },
+            "require": {
+                "aws/aws-sdk-php": "^3.19",
+                "elife/api": "dev-master",
+                "elife/api-sdk": "dev-master",
+                "jms/serializer": "^1.4",
+                "psr/log": "1.0.*"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^5.7"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "eLife\\Bus\\": "./src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "eLife Sciences bus SDK",
+            "time": "2017-01-11 13:49:43"
         },
         {
             "name": "guzzlehttp/guzzle",
@@ -1552,21 +1589,21 @@
         },
         {
             "name": "monolog/monolog",
-            "version": "dev-master",
+            "version": "1.22.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Seldaek/monolog.git",
-                "reference": "efb3fa354ce454e2465a9af2f30acd3d60269e5b"
+                "reference": "bad29cb8d18ab0315e6c477751418a82c850d558"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/efb3fa354ce454e2465a9af2f30acd3d60269e5b",
-                "reference": "efb3fa354ce454e2465a9af2f30acd3d60269e5b",
+                "url": "https://api.github.com/repos/Seldaek/monolog/zipball/bad29cb8d18ab0315e6c477751418a82c850d558",
+                "reference": "bad29cb8d18ab0315e6c477751418a82c850d558",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.0",
-                "psr/log": "^1.0.1"
+                "php": ">=5.3.0",
+                "psr/log": "~1.0"
             },
             "provide": {
                 "psr/log-implementation": "1.0.0"
@@ -1574,13 +1611,12 @@
             "require-dev": {
                 "aws/aws-sdk-php": "^2.4.9 || ^3.0",
                 "doctrine/couchdb": "~1.0@dev",
-                "graylog2/gelf-php": "^1.4.2",
-                "jakub-onderka/php-parallel-lint": "^0.9",
+                "graylog2/gelf-php": "~1.0",
+                "jakub-onderka/php-parallel-lint": "0.9",
                 "php-amqplib/php-amqplib": "~2.4",
                 "php-console/php-console": "^3.1.3",
-                "phpspec/prophecy": "^1.6.1",
-                "phpunit/phpunit": "^5.5",
-                "predis/predis": "^1.1",
+                "phpunit/phpunit": "~4.5",
+                "phpunit/phpunit-mock-objects": "2.3.0",
                 "ruflin/elastica": ">=0.90 <3.0",
                 "sentry/sentry": "^0.13",
                 "swiftmailer/swiftmailer": "~5.3"
@@ -1589,9 +1625,9 @@
                 "aws/aws-sdk-php": "Allow sending log messages to AWS services like DynamoDB",
                 "doctrine/couchdb": "Allow sending log messages to a CouchDB server",
                 "ext-amqp": "Allow sending log messages to an AMQP server (1.0+ required)",
-                "ext-mongodb": "Allow sending log messages to a MongoDB server (via driver)",
+                "ext-mongo": "Allow sending log messages to a MongoDB server",
                 "graylog2/gelf-php": "Allow sending log messages to a GrayLog2 server",
-                "mongodb/mongodb": "Allow sending log messages to a MongoDB server (via library)",
+                "mongodb/mongodb": "Allow sending log messages to a MongoDB server via PHP Driver",
                 "php-amqplib/php-amqplib": "Allow sending log messages to an AMQP server using php-amqplib",
                 "php-console/php-console": "Allow sending log messages to Google Chrome",
                 "rollbar/rollbar": "Allow sending log messages to Rollbar",
@@ -1627,7 +1663,7 @@
                 "logging",
                 "psr-3"
             ],
-            "time": "2016-12-16 07:47:02"
+            "time": "2016-11-26 00:15:39"
         },
         {
             "name": "mtdowling/jmespath.php",
@@ -3009,6 +3045,66 @@
             "description": "Symfony HttpKernel Component",
             "homepage": "https://symfony.com",
             "time": "2016-12-13 13:19:46"
+        },
+        {
+            "name": "symfony/monolog-bridge",
+            "version": "v3.2.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/monolog-bridge.git",
+                "reference": "4442fef81bddd89a9a20987a3f6a3e5efb5cc22f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/monolog-bridge/zipball/4442fef81bddd89a9a20987a3f6a3e5efb5cc22f",
+                "reference": "4442fef81bddd89a9a20987a3f6a3e5efb5cc22f",
+                "shasum": ""
+            },
+            "require": {
+                "monolog/monolog": "~1.11",
+                "php": ">=5.5.9",
+                "symfony/http-kernel": "~2.8|~3.0"
+            },
+            "require-dev": {
+                "symfony/console": "~2.8|~3.0",
+                "symfony/event-dispatcher": "~2.8|~3.0"
+            },
+            "suggest": {
+                "symfony/console": "For the possibility to show log messages in console commands depending on verbosity settings. You need version ~2.3 of the console for it.",
+                "symfony/event-dispatcher": "Needed when using log messages in console commands.",
+                "symfony/http-kernel": "For using the debugging handlers together with the response life cycle of the HTTP kernel."
+            },
+            "type": "symfony-bridge",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.2-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Bridge\\Monolog\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony Monolog Bridge",
+            "homepage": "https://symfony.com",
+            "time": "2017-01-02 20:32:22"
         },
         {
             "name": "symfony/polyfill-mbstring",
@@ -5431,8 +5527,8 @@
         "elife/api": 20,
         "doctrine/cache": 20,
         "symfony/event-dispatcher": 20,
-        "monolog/monolog": 20,
-        "webmozart/json": 20
+        "webmozart/json": 20,
+        "elife/bus-sdk": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
