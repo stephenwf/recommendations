@@ -42,8 +42,8 @@ class RuleModelRepository
           LIMIT ? 
           OFFSET ?;
         ');
-        $prepared->bindParam(1, $offset);
-        $prepared->bindParam(2, $count);
+        $prepared->bindParam(1, $offset, PDO::PARAM_INT);
+        $prepared->bindParam(2, $count, PDO::PARAM_INT);
         $prepared->execute();
 
         return $this->mapAll($prepared->fetchAll());

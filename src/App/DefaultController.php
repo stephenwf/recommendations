@@ -52,9 +52,13 @@ final class DefaultController
 
     public function allAction(Request $request)
     {
+        $page = $request->get('page', 1);
+        $perPage = $request->get('per-page', 25);
+        $offset = ($page - 1) * $perPage;
+
         $mediaType = $this->acceptableResponse($request->headers->get('Accept'));
         $version = $mediaType->getVersion() || self::CURRENT_VERSION;
-        $recommendations = $this->repo->slice(0, 100);
+        $recommendations = $this->repo->slice($offset, $perPage);
         $items = $this->hydrator->hydrateAll($recommendations);
         $this->context->setVersion($version);
         $json = $this->serializer->serialize(RecommendationsResponse::fromModels($items, count($items)), 'json', $this->context);
