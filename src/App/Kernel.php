@@ -3,7 +3,6 @@
 namespace eLife\App;
 
 use Closure;
-use Dflydev\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\Common\Annotations\CachedReader;
@@ -61,7 +60,6 @@ final class Kernel implements MinimalKernel
         $app = new Application();
         if (file_exists(self::ROOT.'/config/db.ini')) {
             $ini = parse_ini_string(file_get_contents(self::ROOT.'/config/db.ini'), true);
-            // @todo make prettier.
             $config['db'] = array_merge($config['db'] ?? [], $ini['db'] ?? []);
         }
         // Load config
@@ -103,26 +101,6 @@ final class Kernel implements MinimalKernel
         $app->register(new DoctrineServiceProvider(), array(
             'db.options' => $app['config']['db'],
         ));
-
-//        $app->register(new DoctrineOrmServiceProvider, array(
-//            'orm.proxies_dir' => '/path/to/proxies',
-//            'orm.em.options' => array(
-//                'mappings' => array(
-//                    // Using actual filesystem paths
-//                    array(
-//                        'type' => 'annotation',
-//                        'namespace' => 'Foo\Entities',
-//                        'path' => __DIR__.'/src/Foo/Entities',
-//                    ),
-//                    array(
-//                        'type' => 'xml',
-//                        'namespace' => 'Bat\Entities',
-//                        'path' => __DIR__.'/src/Bat/Resources/mappings',
-//                    ),
-//                ),
-//            ),
-//        ));
-
         // DI.
         $this->dependencies($app);
         // Add to class once set up.
