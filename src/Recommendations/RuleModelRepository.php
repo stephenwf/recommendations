@@ -17,22 +17,52 @@ class RuleModelRepository
         $this->db = $conn;
     }
 
+    public function mapAll(array $items)
+    {
+        return array_map([$this, 'map'], $items);
+    }
+
+    public function map($item)
+    {
+        return new RuleModel(
+            $item['id'],
+            $item['type'],
+            new DateTimeImmutable($item['published']),
+            $item['isSynthetic'],
+            $item['rule_id']
+        );
+    }
+
+    public function slice(int $offset, int $count)
+    {
+        $prepared = $this->db->prepare('
+          SELECT Rules.rule_id, Rules.id, Rules.type, Rules.published, Rules.isSynthetic 
+          FROM Rules
+          ORDER BY Rules.published
+          LIMIT ? 
+          OFFSET ?;
+        ');
+        $prepared->bindParam(1, $offset);
+        $prepared->bindParam(2, $count);
+        $prepared->execute();
+
+        return $this->mapAll($prepared->fetchAll());
+    }
+
     public function getAll(RuleModel $ruleModel)
     {
         $model = $this->get($ruleModel);
         $prepared = $this->db->prepare('
           SELECT Rules.rule_id, Rules.id, Rules.type, Rules.published, Rules.isSynthetic 
           FROM Rules
-          LEFT JOIN `References` as R ON Rules.rule_id = R.subject_id
+          LEFT JOIN `References` AS R ON Rules.rule_id = R.subject_id
           WHERE R.on_id = ?
           ORDER BY Rules.published;
         ');
         $prepared->bindParam(1, $model['rule_id']);
         $prepared->execute();
 
-        return array_map(function ($item) {
-            return new RuleModel($item['id'], $item['type'], new DateTimeImmutable($item['published']), $item['isSynthetic'], $item['rule_id']);
-        }, $prepared->fetchAll());
+        return $this->mapAll($prepared->fetchAll());
     }
 
     public function get(RuleModel $ruleModel)
@@ -65,7 +95,7 @@ class RuleModelRepository
         return $ruleModel;
     }
 
-    public function upsert(RuleModel $ruleModel) : RuleModel
+    public function upsert(RuleModel $ruleModel): RuleModel
     {
         if ($ruleModel->isFromDatabase()) {
             return $ruleModel;

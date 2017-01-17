@@ -7,6 +7,7 @@ use eLife\Recommendations\Process\Hydration;
 use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\RecommendationsResponse;
 use eLife\Recommendations\RuleModel;
+use eLife\Recommendations\RuleModelRepository;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,12 +23,13 @@ final class DefaultController
     const CURRENT_VERSION = 1;
     const MAX_VERSION = 1;
 
-    public function __construct(Rules $rules, Hydration $hydrator, Serializer $serializer)
+    public function __construct(Rules $rules, Hydration $hydrator, Serializer $serializer, RuleModelRepository $repo)
     {
         $this->rules = $rules;
         $this->hydrator = $hydrator;
         $this->serializer = $serializer;
         $this->context = new SerializationContext();
+        $this->repo = $repo;
     }
 
     public function acceptableResponse(string $contentType)
@@ -46,6 +48,20 @@ final class DefaultController
         }
 
         return $mediaType;
+    }
+
+    public function allAction(Request $request)
+    {
+        $mediaType = $this->acceptableResponse($request->headers->get('Accept'));
+        $version = $mediaType->getVersion() || self::CURRENT_VERSION;
+        $recommendations = $this->repo->slice(0, 100);
+        $items = $this->hydrator->hydrateAll($recommendations);
+        $this->context->setVersion($version);
+        $json = $this->serializer->serialize(RecommendationsResponse::fromModels($items, count($items)), 'json', $this->context);
+
+        return new Response($json, 200, [
+            'Content-Type' => (string) (new MediaType(self::MEDIA_TYPE, $version)),
+        ]);
     }
 
     public function indexAction(Request $request, string $type, string $id)

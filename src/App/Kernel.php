@@ -269,7 +269,7 @@ final class Kernel implements MinimalKernel
         };
 
         $app['default_controller'] = function (Application $app) {
-            return new DefaultController($app['rules.process'], $app['hydration'], $app['serializer']);
+            return new DefaultController($app['rules.process'], $app['hydration'], $app['serializer'], $app['rules.repository']);
         };
     }
 
