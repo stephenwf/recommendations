@@ -10,7 +10,6 @@ namespace eLife\Api\Command;
 use eLife\ApiSdk\ApiSdk;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -22,15 +21,16 @@ abstract class PopulateCommand extends Command
     private $sdk;
     private $serializer;
     private $output;
-    private $showProgressBar;
+    protected $logger;
 
     public function __construct(
         ApiSdk $sdk,
-        bool $showProgressBar = true
+        LoggerInterface $logger
     ) {
         $this->serializer = $sdk->getSerializer();
         $this->sdk = $sdk;
-        $this->showProgressBar = $showProgressBar;
+        $this->logger = $logger;
+
         parent::__construct(null);
     }
 
@@ -52,12 +52,11 @@ abstract class PopulateCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $logger = new CliLogger($input, $output);
         $this->output = $output;
         $entity = $input->getArgument('entity');
         // Only the configured.
         if (!in_array($entity, static::getSupportedModels())) {
-            $logger->error('Entity with name '.$entity.' not supported.');
+            $this->logger->error('Entity with name '.$entity.' not supported.');
 
             return;
         }
@@ -65,89 +64,79 @@ abstract class PopulateCommand extends Command
             foreach (static::getSupportedModels() as $e) {
                 if ($e !== 'all') {
                     // Run the item.
-                    $this->{'import'.$e}($logger);
+                    $this->{'import'.$e}();
                 }
             }
         } else {
             // Run the item.
-            $this->{'import'.$entity}($logger);
+            $this->{'import'.$entity}();
         }
         // Reporting.
-        $logger->info("\nAll entities queued.");
+        $this->logger->info("\nAll entities queued.");
     }
 
-    public function importPodcastEpisodes(LoggerInterface $logger)
+    public function importPodcastEpisodes()
     {
-        $logger->info('Importing Podcast Episodes');
+        $this->logger->info('Importing Podcast Episodes');
         $episodes = $this->sdk->podcastEpisodes();
-        $this->iterateSerializeTask($episodes, $logger, 'podcast-episode');
+        $this->iterateSerializeTask($episodes, 'podcast-episode');
     }
 
-    public function importCollections(LoggerInterface $logger)
+    public function importCollections()
     {
-        $logger->info('Importing Collections');
+        $this->logger->info('Importing Collections');
         $collections = $this->sdk->collections();
-        $this->iterateSerializeTask($collections, $logger, 'collection', $collections->count());
+        $this->iterateSerializeTask($collections, 'collection');
     }
 
-    public function importLabsExperiments(LoggerInterface $logger)
+    public function importLabsExperiments()
     {
-        $logger->info('Importing Labs Experiments');
+        $this->logger->info('Importing Labs Experiments');
         $events = $this->sdk->labsExperiments();
-        $this->iterateSerializeTask($events, $logger, 'labs-experiment', $events->count());
+        $this->iterateSerializeTask($events, 'labs-experiment');
     }
 
-    public function importResearchArticles(LoggerInterface $logger)
+    public function importResearchArticles()
     {
-        $logger->info('Importing Research Articles');
+        $this->logger->info('Importing Research Articles');
         $events = $this->sdk->articles();
-        $this->iterateSerializeTask($events, $logger, 'research-article', $events->count());
+        $this->iterateSerializeTask($events, 'research-article');
     }
 
-    public function importInterviews(LoggerInterface $logger)
+    public function importInterviews()
     {
-        $logger->info('Importing Interviews');
+        $this->logger->info('Importing Interviews');
         $events = $this->sdk->interviews();
-        $this->iterateSerializeTask($events, $logger, 'interview', $events->count());
+        $this->iterateSerializeTask($events, 'interview');
     }
 
-    public function importEvents(LoggerInterface $logger)
+    public function importEvents()
     {
-        $logger->info('Importing Events');
+        $this->logger->info('Importing Events');
         $events = $this->sdk->events();
-        $this->iterateSerializeTask($events, $logger, 'event', $events->count());
+        $this->iterateSerializeTask($events, 'event');
     }
 
-    public function importBlogArticles(LoggerInterface $logger)
+    public function importBlogArticles()
     {
-        $logger->info('Importing Blog Articles');
+        $this->logger->info('Importing Blog Articles');
         $articles = $this->sdk->blogArticles();
-        $this->iterateSerializeTask($articles, $logger, 'blog-article', $articles->count());
+        $this->iterateSerializeTask($articles, 'blog-article');
     }
 
-    private function iterateSerializeTask(Traversable $items, LoggerInterface $logger, string $type, int $count = 0)
+    private function iterateSerializeTask(Traversable $items, string $type)
     {
         $progress = null;
-        if ($this->showProgressBar) {
-            $progress = new ProgressBar($this->output, $count);
-        }
         foreach ($items as $item) {
-            if ($progress) {
-                $progress->advance();
-            }
             try {
-                $this->processModel($type, $item, $logger);
+                $this->processModel($type, $item);
             } catch (Throwable $e) {
-                $logger->alert($e->getMessage());
-                $logger->warning('Skipping import on a '.get_class($item), ['exception' => $e]);
+                $this->logger->alert($e->getMessage());
+                $this->logger->warning('Skipping import on a '.get_class($item), ['exception' => $e]);
                 continue;
             }
         }
-        if ($progress) {
-            $progress->finish();
-            $progress->clear();
-        }
     }
 
-    abstract public function processModel(string $type, $model, LoggerInterface $logger);
+    abstract public function processModel(string $type, $model);
 }

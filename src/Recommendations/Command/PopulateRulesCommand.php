@@ -15,11 +15,11 @@ final class PopulateRulesCommand extends PopulateCommand
     private $repo;
     private $rules;
 
-    public function __construct(ApiSdk $sdk, RuleModelRepository $repo, Rules $rules)
+    public function __construct(ApiSdk $sdk, RuleModelRepository $repo, Rules $rules, LoggerInterface $logger)
     {
         $this->repo = $repo;
         $this->rules = $rules;
-        parent::__construct($sdk, false);
+        parent::__construct($sdk, $logger);
     }
 
     protected static function getSupportedModels()
@@ -32,20 +32,20 @@ final class PopulateRulesCommand extends PopulateCommand
         return 'Populates the database with relationships based on the rules configured.';
     }
 
-    public function processModel(string $type, $model, LoggerInterface $logger)
+    public function processModel(string $type, $model)
     {
         if ($model instanceof PodcastEpisode) {
             // Import podcast.
             $ruleModel = new RuleModel($model->getNumber(), $type, $model->getPublishedDate());
-            $logger->debug("We got $type with {$model->getNumber()}");
+            $this->logger->debug("We got $type with {$model->getNumber()}");
         } elseif (method_exists($model, 'getId')) {
             $published = method_exists($model, 'getPublishedDate') ? $model->getPublishedDate() : null;
             // Import et al.
             $ruleModel = new RuleModel($model->getId(), $type, $published);
-            $logger->debug("We got $type with {$model->getId()}");
+            $this->logger->debug("We got $type with {$model->getId()}");
         } else {
             // Not good, not et al.
-            $logger->alert('Unknown model type', ['model' => $model, 'type' => $type]);
+            $this->logger->alert('Unknown model type', ['model' => $model, 'type' => $type]);
 
             return;
         }
