@@ -10,6 +10,7 @@
 
 namespace eLife\Recommendations\Process;
 
+use BadMethodCallException;
 use eLife\Recommendations\Rule;
 use eLife\Recommendations\RuleModel;
 
@@ -29,7 +30,9 @@ final class Rules
 
     public function import(RuleModel $model, bool $upsert = true, bool $prune = false): array
     {
-        assert($upsert === true || $prune === false, 'You must upsert in order to prune.');
+        if ($upsert === false && $prune === true) {
+            throw new BadMethodCallException('You must upsert in order to prune.');
+        }
         $all = [];
         foreach ($this->rules as $rule) {
             if ($this->isSupported($model, $rule) === false) {

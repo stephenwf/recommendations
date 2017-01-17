@@ -3,7 +3,6 @@
 namespace eLife\App;
 
 use Closure;
-use Dflydev\Provider\DoctrineOrm\DoctrineOrmServiceProvider;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\Common\Annotations\CachedReader;
@@ -12,6 +11,11 @@ use eLife\ApiClient\HttpClient\Guzzle6HttpClient;
 use eLife\ApiSdk\ApiSdk;
 use eLife\ApiValidator\MessageValidator\JsonMessageValidator;
 use eLife\ApiValidator\SchemaFinder\PuliSchemaFinder;
+use eLife\Bus\Limit\CompositeLimit;
+use eLife\Bus\Limit\LoggingMiddleware;
+use eLife\Bus\Limit\MemoryLimit;
+use eLife\Bus\Limit\SignalsLimit;
+use eLife\Bus\Monitoring;
 use eLife\Recommendations\Process\Hydration;
 use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\RecommendationResultDiscriminator;
@@ -61,7 +65,6 @@ final class Kernel implements MinimalKernel
         $app = new Application();
         if (file_exists(self::ROOT.'/config/db.ini')) {
             $ini = parse_ini_string(file_get_contents(self::ROOT.'/config/db.ini'), true);
-            // @todo make prettier.
             $config['db'] = array_merge($config['db'] ?? [], $ini['db'] ?? []);
         }
         // Load config
@@ -103,26 +106,6 @@ final class Kernel implements MinimalKernel
         $app->register(new DoctrineServiceProvider(), array(
             'db.options' => $app['config']['db'],
         ));
-
-//        $app->register(new DoctrineOrmServiceProvider, array(
-//            'orm.proxies_dir' => '/path/to/proxies',
-//            'orm.em.options' => array(
-//                'mappings' => array(
-//                    // Using actual filesystem paths
-//                    array(
-//                        'type' => 'annotation',
-//                        'namespace' => 'Foo\Entities',
-//                        'path' => __DIR__.'/src/Foo/Entities',
-//                    ),
-//                    array(
-//                        'type' => 'xml',
-//                        'namespace' => 'Bat\Entities',
-//                        'path' => __DIR__.'/src/Bat/Resources/mappings',
-//                    ),
-//                ),
-//            ),
-//        ));
-
         // DI.
         $this->dependencies($app);
         // Add to class once set up.
@@ -184,6 +167,41 @@ final class Kernel implements MinimalKernel
             return new JsonMessageValidator(
                 new PuliSchemaFinder($app['puli.repository']),
                 new JsonDecoder()
+            );
+        };
+
+        $app['monitoring'] = function () {
+            return new Monitoring();
+        };
+
+        $app['monitoring'] = function () {
+            return new Monitoring();
+        };
+
+        /* @internal */
+        $app['limit._memory'] = function (Application $app) {
+            return MemoryLimit::mb($app['config']['process_memory_limit']);
+        };
+
+        /* @internal */
+        $app['limit._signals'] = function () {
+            return SignalsLimit::stopOn(['SIGINT', 'SIGTERM', 'SIGHUP']);
+        };
+
+        $app['limit.long_running'] = function (Application $app) {
+            return new LoggingMiddleware(
+                new CompositeLimit(
+                    $app['limit._memory'],
+                    $app['limit._signals']
+                ),
+                $app['logger']
+            );
+        };
+
+        $app['limit.interactive'] = function (Application $app) {
+            return new LoggingMiddleware(
+                $app['limit._signals'],
+                $app['logger']
             );
         };
 
