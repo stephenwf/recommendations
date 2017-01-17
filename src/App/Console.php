@@ -36,7 +36,7 @@ final class Console
         $this->logger = $app->get('logger');
     }
 
-    public function debugParamsCommand(InputInterface $input, OutputInterface $output)
+    public function debugParamsCommand()
     {
         foreach ($this->app->get('config') as $key => $config) {
             if (is_array($config)) {
@@ -55,7 +55,7 @@ final class Console
         }
     }
 
-    public function cacheClearCommand(InputInterface $input, OutputInterface $output)
+    public function cacheClearCommand()
     {
         $this->logger->warning('Clearing cache...');
         try {
