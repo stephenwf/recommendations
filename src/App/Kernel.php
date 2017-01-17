@@ -16,6 +16,7 @@ use eLife\Bus\Limit\LoggingMiddleware;
 use eLife\Bus\Limit\MemoryLimit;
 use eLife\Bus\Limit\SignalsLimit;
 use eLife\Bus\Monitoring;
+use eLife\Logging\LoggingFactory;
 use eLife\Recommendations\Process\Hydration;
 use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\RecommendationResultDiscriminator;
@@ -34,10 +35,6 @@ use JMS\Serializer\SerializerBuilder;
 use Kevinrob\GuzzleCache\CacheMiddleware;
 use Kevinrob\GuzzleCache\Storage\DoctrineCacheStorage;
 use Kevinrob\GuzzleCache\Strategy\PublicCacheStrategy;
-use Monolog\Formatter\JsonFormatter;
-use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
-use Monolog\Processor\ProcessIdProcessor;
 use Silex\Application;
 use Silex\Provider;
 use Silex\Provider\DoctrineServiceProvider;
@@ -75,8 +72,7 @@ final class Kernel implements MinimalKernel
             'validate' => false,
             'annotation_cache' => true,
             'ttl' => 3600,
-            'file_log_path' => self::ROOT.'/var/logs/all.log',
-            'file_error_log_path' => self::ROOT.'/var/logs/error.log',
+            'file_logs_path' => self::ROOT.'/var/logs',
             'db' => array_merge([
                 'driver' => 'pdo_mysql',
                 'host' => '127.0.0.1',
@@ -206,23 +202,9 @@ final class Kernel implements MinimalKernel
         };
 
         $app['logger'] = function (Application $app) {
-            $logger = new Logger('recommendations-api');
-            if ($app['config']['file_log_path']) {
-                $stream = new StreamHandler($app['config']['file_log_path'], Logger::DEBUG);
-                $stream->pushProcessor(new ProcessIdProcessor());
-                $stream->setFormatter(new JsonFormatter());
-                $logger->pushHandler($stream);
-            }
-            if ($app['config']['file_error_log_path']) {
-                $stream = new StreamHandler($app['config']['file_error_log_path'], Logger::ERROR);
-                $stream->pushProcessor(new ProcessIdProcessor());
-                $detailedFormatter = new JsonFormatter();
-                $detailedFormatter->includeStacktraces();
-                $stream->setFormatter($detailedFormatter);
-                $logger->pushHandler($stream);
-            }
+            $logger = new LoggingFactory($app['config']['file_logs_path'], 'recommendations-api');
 
-            return $logger;
+            return $logger->logger();
         };
 
         //######################################################

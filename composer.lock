@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "216fea8f96989fa6e1bdde2e01a78aee",
-    "content-hash": "09723d015f83ef5d79752be71ddd8ea4",
+    "hash": "8c9d7eca10932b8eaa6a508d1d00f354",
+    "content-hash": "3a826aca398108ab2c900f8765ff3bd7",
     "packages": [
         {
             "name": "aws/aws-sdk-php",
@@ -1084,7 +1084,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/elifesciences/bus-sdk-php/zipball/f97cfb8f7cbca400742d00808031e78b60badd78",
+                "url": "https://api.github.com/repos/elifesciences/bus-sdk-php/zipball/d9a71e244ccc40008cc0546129f285d53800c0c2",
                 "reference": "f97cfb8f7cbca400742d00808031e78b60badd78",
                 "shasum": ""
             },
@@ -1110,6 +1110,39 @@
             ],
             "description": "eLife Sciences bus SDK",
             "time": "2017-01-11 13:49:43"
+        },
+        {
+            "name": "elife/logging-sdk",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/elifesciences/logging-sdk-php.git",
+                "reference": "05306b67f9e7c7f2ea378564a188da368a0f9adc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/elifesciences/logging-sdk-php/zipball/05306b67f9e7c7f2ea378564a188da368a0f9adc",
+                "reference": "05306b67f9e7c7f2ea378564a188da368a0f9adc",
+                "shasum": ""
+            },
+            "require": {
+                "monolog/monolog": "^1.22"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^5.6"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "eLife\\Logging\\": "./src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "eLife Sciences logging SDK",
+            "time": "2017-01-17 16:18:14"
         },
         {
             "name": "guzzlehttp/guzzle",
@@ -5528,7 +5561,8 @@
         "doctrine/cache": 20,
         "symfony/event-dispatcher": 20,
         "webmozart/json": 20,
-        "elife/bus-sdk": 20
+        "elife/bus-sdk": 20,
+        "elife/logging-sdk": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
