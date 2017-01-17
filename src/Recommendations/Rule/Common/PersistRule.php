@@ -1,6 +1,6 @@
 <?php
 
-namespace eLife\Recommendations\Rule;
+namespace eLife\Recommendations\Rule\Common;
 
 use eLife\Recommendations\Relationship;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;

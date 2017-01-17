@@ -3,14 +3,14 @@
 namespace eLife\Recommendations\Rule;
 
 use eLife\ApiSdk\ApiSdk;
-use eLife\ApiSdk\Collection;
 use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\ApiSdk\Model\Subject;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule;
+use eLife\Recommendations\Rule\Common\GetSdk;
+use eLife\Recommendations\Rule\Common\PersistRule;
 use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
-use eLife\Sdk\Article;
 
 class MostRecentWithSubject implements Rule
 {

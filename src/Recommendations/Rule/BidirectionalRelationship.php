@@ -8,6 +8,8 @@ use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\ApiSdk\Model\ExternalArticle as ExternalArticleModel;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule;
+use eLife\Recommendations\Rule\Common\PersistRule;
+use eLife\Recommendations\Rule\Common\RepoRelations;
 use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
 use Psr\Log\LoggerInterface;
