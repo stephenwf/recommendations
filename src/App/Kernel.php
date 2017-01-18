@@ -52,6 +52,7 @@ final class Kernel implements MinimalKernel
 
     public static $routes = [
         '/recommendations/{type}/{id}' => 'indexAction',
+        '/recommendations' => 'allAction',
         '/ping' => 'pingAction',
     ];
 
@@ -269,7 +270,7 @@ final class Kernel implements MinimalKernel
         };
 
         $app['default_controller'] = function (Application $app) {
-            return new DefaultController($app['rules.process'], $app['hydration'], $app['serializer']);
+            return new DefaultController($app['rules.process'], $app['hydration'], $app['serializer'], $app['rules.repository']);
         };
     }
 

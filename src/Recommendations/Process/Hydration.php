@@ -36,8 +36,12 @@ final class Hydration
                 return $this->sdk->articles();
                 break;
 
+            case 'subject':
+                return $this->sdk->subjects();
+                break;
+
             default:
-                throw new LogicException('ApiSDK does not exist for that type.');
+                throw new LogicException('ApiSDK does not exist for type '.$item->getType().'.');
         }
     }
 
