@@ -70,9 +70,11 @@ final class DefaultController
 
     public function indexAction(Request $request, string $type, string $id)
     {
+        $requestModel = new RuleModel($id, $type);
         $mediaType = $this->acceptableResponse($request->headers->get('Accept'));
         $version = $mediaType->getVersion() || self::CURRENT_VERSION;
-        $recommendations = $this->rules->getRecommendations(new RuleModel($id, $type));
+//        $this->hydrator->extractRelatedFrom($requestModel);
+        $recommendations = $this->rules->getRecommendations($requestModel);
         $items = $this->hydrator->hydrateAll($recommendations);
         $this->context->setVersion($version);
         $json = $this->serializer->serialize(RecommendationsResponse::fromModels($items, count($items)), 'json', $this->context);

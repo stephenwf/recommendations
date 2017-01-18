@@ -57,7 +57,7 @@ final class ExternalArticle implements Article, Result
     public static function fromModel(ExternalArticleModel $externalArticle)
     {
         return new static(
-            $externalArticle->getArticleTitle(),
+            $externalArticle->getTitle(),
             $externalArticle->getAuthorLine(),
             $externalArticle->getUri(),
             Journal::fromModel($externalArticle->getJournal())

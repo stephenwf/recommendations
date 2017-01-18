@@ -3,7 +3,7 @@
 namespace eLife\Recommendations\Rule;
 
 use eLife\ApiSdk\ApiSdk;
-use eLife\ApiSdk\Model\ArticleVersion;
+use eLife\ApiSdk\Model\HasSubjects;
 use eLife\ApiSdk\Model\Subject;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule;
@@ -30,8 +30,11 @@ class MostRecentWithSubject implements Rule
 
     public function resolveRelations(RuleModel $input): array
     {
-        /** @var ArticleVersion $model Added to stop IDE complaining @todo create hasSubjects interface. */
+        /** @var HasSubjects $model Added to stop IDE complaining. */
         $model = $this->getFromSdk($input->getType(), $input->getId());
+        if (!$model instanceof HasSubjects) {
+            return [];
+        }
 
         return $model
             ->getSubjects()

@@ -3,8 +3,10 @@
 namespace eLife\Recommendations\Rule;
 
 use eLife\ApiSdk\ApiSdk;
+use eLife\ApiSdk\Model\Article;
 use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\ApiSdk\Model\Collection;
+use eLife\ApiSdk\Model\ExternalArticle;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule;
 use eLife\Recommendations\Rule\Common\PersistRule;
@@ -40,11 +42,13 @@ final class CollectionContents implements Rule
 
         return $collection->getContent()
             ->filter(function ($item) {
-                return $item instanceof ArticleVersion;
+                return $item instanceof Article;
             })
-            ->map(function (ArticleVersion $article) use ($input) {
+            ->map(function (Article $article) use ($input) {
+                $type = $article instanceof ExternalArticle ? 'external-article' : 'research-article';
+                $date = $article instanceof ArticleVersion ? $article->getPublishedDate() : null;
                 // Add collection TO article.
-                return new ManyToManyRelationship(new RuleModel($article->getId(), 'research-article', $article->getPublishedDate()), $input);
+                return new ManyToManyRelationship(new RuleModel($article->getId(), $type, $date), $input);
             })
             ->toArray();
     }
