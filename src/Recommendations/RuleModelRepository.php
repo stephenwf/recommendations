@@ -33,6 +33,41 @@ class RuleModelRepository
         );
     }
 
+    public function latestByPublished() : array
+    {
+        $prepared = $this->db->prepare('
+          SELECT Rules.rule_id, Rules.id, Rules.type, Rules.published, Rules.isSynthetic 
+          FROM Rules
+          WHERE Rules.type = \'research-article\'
+          ORDER BY Rules.published
+          LIMIT 1 
+          OFFSET ?;
+        ');
+        $prepared->bindParam(1, $offset, PDO::PARAM_INT);
+        $prepared->execute();
+
+        return $this->map($prepared->fetch());
+    }
+
+    public function latestByPublishedWithSubject(string $subject, int $offset = 0)
+    {
+        $prepared = $this->db->prepare('
+          SELECT Rules.rule_id, Rules.id, Rules.type, Rules.published, Rules.isSynthetic 
+          FROM Rules
+          LEFT JOIN `References` AS R ON Rules.rule_id = R.subject_id
+          WHERE R.id = ? 
+            AND Rules.type = \'research-article\'
+            AND R
+          ORDER BY Rules.published
+          LIMIT 1 
+          OFFSET ?;
+        ');
+        $prepared->bindParam(1, $offset, PDO::PARAM_INT);
+        $prepared->execute();
+
+        return $this->map($prepared->fetch());
+    }
+
     public function slice(int $offset, int $count)
     {
         $prepared = $this->db->prepare('
