@@ -53,7 +53,7 @@ final class DefaultController
     public function allAction(Request $request)
     {
         $page = $request->get('page', 1);
-        $perPage = $request->get('per-page', 25);
+        $perPage = $request->get('per-page', 100);
         $offset = ($page - 1) * $perPage;
 
         $mediaType = $this->acceptableResponse($request->headers->get('Accept'));

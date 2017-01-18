@@ -38,12 +38,13 @@ class RuleModelRepository
         $prepared = $this->db->prepare('
           SELECT Rules.rule_id, Rules.id, Rules.type, Rules.published, Rules.isSynthetic 
           FROM Rules
+          WHERE Rules.type != \'subject\'
           ORDER BY Rules.published
           LIMIT ? 
           OFFSET ?;
         ');
-        $prepared->bindParam(1, $offset, PDO::PARAM_INT);
-        $prepared->bindParam(2, $count, PDO::PARAM_INT);
+        $prepared->bindParam(1, $count, PDO::PARAM_INT);
+        $prepared->bindParam(2, $offset, PDO::PARAM_INT);
         $prepared->execute();
 
         return $this->mapAll($prepared->fetchAll());
