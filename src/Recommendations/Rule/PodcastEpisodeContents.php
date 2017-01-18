@@ -40,7 +40,7 @@ class PodcastEpisodeContents implements Rule
                 return $content instanceof ArticleVersion;
             })->map(function (ArticleVersion $article) use ($input) {
                 // Link this podcast TO the related item.
-                return new ManyToManyRelationship(new RuleModel($article->getId(), $article->getType(), $article->getPublishedDate()), $input);
+                return new ManyToManyRelationship(new RuleModel($article->getId(), 'research-article', $article->getPublishedDate()), $input);
             })->toArray();
         }
 

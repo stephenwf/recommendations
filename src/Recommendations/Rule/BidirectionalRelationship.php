@@ -83,7 +83,7 @@ class BidirectionalRelationship implements Rule
             ->map(function (Article $article) use ($input) {
                 $this->logger->debug('Mapping to relation '.$input->getId());
 
-                return new ManyToManyRelationship($input, new RuleModel($article->getId(), $article->getType(), $article->getPublishedDate()));
+                return new ManyToManyRelationship($input, new RuleModel($article->getId(), 'research-article', $article->getPublishedDate()));
             })
             ->toArray();
     }

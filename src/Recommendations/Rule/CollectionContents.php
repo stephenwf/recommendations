@@ -44,7 +44,7 @@ final class CollectionContents implements Rule
             })
             ->map(function (ArticleVersion $article) use ($input) {
                 // Add collection TO article.
-                return new ManyToManyRelationship(new RuleModel($article->getId(), $article->getType(), $article->getPublishedDate()), $input);
+                return new ManyToManyRelationship(new RuleModel($article->getId(), 'research-article', $article->getPublishedDate()), $input);
             })
             ->toArray();
     }
