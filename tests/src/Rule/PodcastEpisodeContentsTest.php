@@ -8,7 +8,7 @@ use eLife\Recommendations\RuleModel;
 use PHPUnit_Framework_TestCase;
 use test\eLife\ApiSdk\Serializer\PodcastEpisodeNormalizerTest;
 
-class PodcastEpisodeContentsTest extends PHPUnit_Framework_TestCase
+abstract class PodcastEpisodeContentsTest extends PHPUnit_Framework_TestCase
 {
     use ValidRelationAssertion;
 
