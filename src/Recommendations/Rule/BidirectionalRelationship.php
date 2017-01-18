@@ -61,11 +61,6 @@ class BidirectionalRelationship implements Rule
     {
         $this->logger->debug('Starting to resolve relations for article with id '.$input->getId());
         $article = $this->getArticle($input->getId());
-        if ($article instanceof ExternalArticleModel) {
-            $this->logger->warning('We cannot process external article at this time.');
-
-            return [];
-        }
         $related = $article->getRelatedArticles();
         $this->logger->debug('Found related articles ('.$related->count().')');
         $type = $this->type;
@@ -73,7 +68,7 @@ class BidirectionalRelationship implements Rule
 
         return $related
             ->filter(function ($item) {
-                return $item instanceof ArticleVersion;
+                return $item instanceof Article;
             })
             ->filter(function (Article $article) use ($type) {
                 $this->logger->debug('Found related article id: '.$article->getId().' and type: '.$type);
@@ -81,9 +76,12 @@ class BidirectionalRelationship implements Rule
                 return $article->getType() === $type;
             })
             ->map(function (Article $article) use ($input) {
+                $type = $article instanceof ExternalArticleModel ? 'external-article' : 'research-article';
+                $date = $article instanceof ArticleVersion ? $article->getPublishedDate() : null;
+                // Link this podcast TO the related item.
                 $this->logger->debug('Mapping to relation '.$input->getId());
 
-                return new ManyToManyRelationship($input, new RuleModel($article->getId(), 'research-article', $article->getPublishedDate()));
+                return new ManyToManyRelationship($input, new RuleModel($article->getId(), $type, $date));
             })
             ->toArray();
     }

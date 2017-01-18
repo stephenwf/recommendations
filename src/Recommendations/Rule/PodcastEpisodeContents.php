@@ -3,7 +3,9 @@
 namespace eLife\Recommendations\Rule;
 
 use eLife\ApiSdk\ApiSdk;
+use eLife\ApiSdk\Model\Article;
 use eLife\ApiSdk\Model\ArticleVersion;
+use eLife\ApiSdk\Model\ExternalArticle;
 use eLife\ApiSdk\Model\PodcastEpisode;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule;
@@ -30,17 +32,19 @@ class PodcastEpisodeContents implements Rule
 
     public function resolveRelations(RuleModel $input): array
     {
-        /** @var PodcastEpisode $model Added to stop IDE complaining @todo create hasSubjects interface. */
+        /** @var PodcastEpisode $model Added to stop IDE complaining. */
         $model = $this->getFromSdk($input->getType(), $input->getId());
         $relations = [];
         foreach ($model->getChapters() as $chapter) {
             $content = $chapter->getContent();
             $relations[] = $content->filter(function ($content) {
                 // Only article for now in this rule.
-                return $content instanceof ArticleVersion;
+                return $content instanceof Article;
             })->map(function (ArticleVersion $article) use ($input) {
+                $type = $article instanceof ExternalArticle ? 'external-article' : 'research-article';
+                $date = $article instanceof ArticleVersion ? $article->getPublishedDate() : null;
                 // Link this podcast TO the related item.
-                return new ManyToManyRelationship(new RuleModel($article->getId(), 'research-article', $article->getPublishedDate()), $input);
+                return new ManyToManyRelationship(new RuleModel($article->getId(), $type, $date), $input);
             })->toArray();
         }
 
