@@ -32,6 +32,8 @@ class PodcastEpisodeContents implements Rule
 
     public function resolveRelations(RuleModel $input): array
     {
+        // Because ELPP-2031
+        return [];
         /** @var PodcastEpisode $model Added to stop IDE complaining. */
         $model = $this->getFromSdk($input->getType(), $input->getId());
         $relations = [];

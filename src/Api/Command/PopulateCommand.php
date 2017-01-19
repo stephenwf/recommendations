@@ -9,7 +9,7 @@ namespace eLife\Api\Command;
 
 use eLife\ApiSdk\ApiSdk;
 use eLife\Bus\Limit\Limit;
-use eLife\Bus\Monitoring;
+use eLife\Logging\Monitoring;
 use Iterator;
 use Psr\Log\LoggerInterface;
 use RuntimeException;

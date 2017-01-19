@@ -3,8 +3,6 @@
 namespace eLife\App;
 
 use Closure;
-use eLife\Recommendations\Command\GenerateDatabaseCommand;
-use eLife\Recommendations\Command\PopulateRulesCommand;
 use Exception;
 use LogicException;
 use Symfony\Component\Console\Application;
@@ -17,6 +15,7 @@ final class Console
     public static $quick_commands = [
         'cache:clear' => ['description' => 'Clears cache'],
         'debug:params' => ['description' => 'Lists current parameters'],
+
     ];
 
     public function __construct(Application $console, Kernel $app)
@@ -30,17 +29,9 @@ final class Console
             ->addOption(new InputOption('--env', '-e', InputOption::VALUE_REQUIRED, 'The Environment name.', 'dev'));
 
         // Add custom commands.
-        $this->console->add(
-            new PopulateRulesCommand(
-                $app->get('api.sdk'),
-                $app->get('rules.repository'),
-                $app->get('rules.process'),
-                $app->get('logger'),
-                $app->get('monitoring'),
-                $app->get('limit.interactive')
-            )
-        );
-        $this->console->add(new GenerateDatabaseCommand($app->get('db'), $app->get('logger')));
+        $this->console->add($app->get('console.populate_rules'));
+        $this->console->add($app->get('console.generate_database'));
+        // Set up logger.
         $this->logger = $app->get('logger');
     }
 

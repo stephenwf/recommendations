@@ -15,8 +15,10 @@ use eLife\Bus\Limit\CompositeLimit;
 use eLife\Bus\Limit\LoggingMiddleware;
 use eLife\Bus\Limit\MemoryLimit;
 use eLife\Bus\Limit\SignalsLimit;
-use eLife\Bus\Monitoring;
 use eLife\Logging\LoggingFactory;
+use eLife\Logging\Monitoring;
+use eLife\Recommendations\Command\GenerateDatabaseCommand;
+use eLife\Recommendations\Command\PopulateRulesCommand;
 use eLife\Recommendations\Process\Hydration;
 use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\RecommendationResultDiscriminator;
@@ -231,6 +233,25 @@ final class Kernel implements MinimalKernel
                 /* 13 */ new MostRecent(),
                 /* 14 */ new MostRecentWithSubject($app['api.sdk'], $app['rules.repository'])
             );
+        };
+
+        //#####################################################
+        // ------------------- Commands ----------------------
+        //#####################################################
+
+        $app['console.populate_rules'] = function (Application $app) {
+            return new PopulateRulesCommand(
+                $app['api.sdk'],
+                $app['rules.repository'],
+                $app['rules.process'],
+                $app['logger'],
+                $app['monitoring'],
+                $app['limit.interactive']
+            );
+        };
+
+        $app['console.generate_database'] = function (Application $app) {
+            return new GenerateDatabaseCommand($app['db'], $app['logger']);
         };
 
         //#####################################################

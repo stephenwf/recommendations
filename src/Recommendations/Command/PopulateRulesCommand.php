@@ -5,7 +5,7 @@ namespace eLife\Recommendations\Command;
 use eLife\Api\Command\PopulateCommand;
 use eLife\ApiSdk\ApiSdk;
 use eLife\ApiSdk\Model\PodcastEpisode;
-use eLife\Bus\Monitoring;
+use eLife\Logging\Monitoring;
 use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
