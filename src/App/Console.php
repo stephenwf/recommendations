@@ -2,6 +2,8 @@
 
 namespace eLife\App;
 
+use Aws\Sqs\Exception\SqsException;
+use Aws\Sqs\SqsClient;
 use Closure;
 use Exception;
 use LogicException;
@@ -15,7 +17,7 @@ final class Console
     public static $quick_commands = [
         'cache:clear' => ['description' => 'Clears cache'],
         'debug:params' => ['description' => 'Lists current parameters'],
-
+        'queue:create' => ['description' => 'Lists current parameters'],
     ];
 
     public function __construct(Application $console, Kernel $app)
@@ -23,6 +25,7 @@ final class Console
         $this->console = $console;
         $this->app = $app;
         $this->root = __DIR__.'/../..';
+        $this->config = $this->app->get('config');
 
         $this->console
             ->getDefinition()
@@ -33,6 +36,22 @@ final class Console
         $this->console->add($app->get('console.generate_database'));
         // Set up logger.
         $this->logger = $app->get('logger');
+        try {
+            $this->console->add($app->get('console.queue'));
+        } catch (SqsException $e) {
+            $this->logger->warning('Something went wrong while connecting to SQS', ['exception' => $e]);
+        }
+    }
+
+    public function queueCreateCommand()
+    {
+        /** @var SqsClient $queue */
+        $queue = $this->app->get('aws.sqs');
+
+        $queue->createQueue([
+            'Region' => $this->config['aws']['region'],
+            'QueueName' => $this->config['aws']['queue_name'],
+        ]);
     }
 
     public function debugParamsCommand()

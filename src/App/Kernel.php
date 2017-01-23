@@ -2,6 +2,7 @@
 
 namespace eLife\App;
 
+use Aws\Sqs\SqsClient;
 use Closure;
 use Doctrine\Common\Annotations\AnnotationReader;
 use Doctrine\Common\Annotations\AnnotationRegistry;
@@ -15,9 +16,12 @@ use eLife\Bus\Limit\CompositeLimit;
 use eLife\Bus\Limit\LoggingMiddleware;
 use eLife\Bus\Limit\MemoryLimit;
 use eLife\Bus\Limit\SignalsLimit;
+use eLife\Bus\Queue\SqsMessageTransformer;
+use eLife\Bus\Queue\SqsWatchableQueue;
 use eLife\Logging\LoggingFactory;
 use eLife\Logging\Monitoring;
 use eLife\Recommendations\Command\GenerateDatabaseCommand;
+use eLife\Recommendations\Command\MysqlRepoQueueCommand;
 use eLife\Recommendations\Command\PopulateRulesCommand;
 use eLife\Recommendations\Process\Hydration;
 use eLife\Recommendations\Process\Rules;
@@ -75,6 +79,7 @@ final class Kernel implements MinimalKernel
             'validate' => false,
             'annotation_cache' => true,
             'ttl' => 3600,
+            'process_memory_limit' => 200,
             'file_logs_path' => self::ROOT.'/var/logs',
             'db' => array_merge([
                 'driver' => 'pdo_mysql',
@@ -85,6 +90,14 @@ final class Kernel implements MinimalKernel
                 'password' => '',
                 'charset' => 'utf8mb4',
             ], $config['db'] ?? []),
+            'aws' => array_merge([
+                'credential_file' => false,
+                'mock_queue' => true,
+                'queue_name' => 'eLife-recommendations',
+                'key' => '-----------------------',
+                'secret' => '-------------------------------',
+                'region' => '---------',
+            ], $config['aws'] ?? []),
         ], $config);
         // Annotations.
         AnnotationRegistry::registerAutoloadNamespace(
@@ -215,6 +228,7 @@ final class Kernel implements MinimalKernel
 
         $app['rules.process'] = function (Application $app) {
             return new Rules(
+                $app['logger'],
                 new NormalizedPersistence(
                     $app['rules.repository'],
                     /* 1 */ new BidirectionalRelationship($app['api.sdk'], 'retraction', $app['rules.repository'], $app['logger']),
@@ -236,6 +250,36 @@ final class Kernel implements MinimalKernel
         };
 
         //#####################################################
+        // --------------------- Queue -----------------------
+        //#####################################################
+
+        $app['aws.sqs'] = function (Application $app) {
+            $config = [
+                'version' => '2012-11-05',
+                'region' => $app['config']['aws']['region'],
+            ];
+            if (isset($app['config']['aws']['endpoint'])) {
+                $config['endpoint'] = $app['config']['aws']['endpoint'];
+            }
+            if (!isset($app['config']['aws']['credential_file']) || $app['config']['aws']['credential_file'] === false) {
+                $config['credentials'] = [
+                    'key' => $app['config']['aws']['key'],
+                    'secret' => $app['config']['aws']['secret'],
+                ];
+            }
+
+            return new SqsClient($config);
+        };
+
+        $app['aws.queue'] = function (Application $app) {
+            return new SqsWatchableQueue($app['aws.sqs'], $app['config']['aws']['queue_name']);
+        };
+
+        $app['aws.queue_transformer'] = function (Application $app) {
+            return new SqsMessageTransformer($app['api.sdk']);
+        };
+
+        //#####################################################
         // ------------------- Commands ----------------------
         //#####################################################
 
@@ -252,6 +296,10 @@ final class Kernel implements MinimalKernel
 
         $app['console.generate_database'] = function (Application $app) {
             return new GenerateDatabaseCommand($app['db'], $app['logger']);
+        };
+
+        $app['console.queue'] = function (Application $app) {
+            return new MysqlRepoQueueCommand($app['rules.process'], $app['logger'], $app['aws.queue'], $app['aws.queue_transformer'], $app['monitoring'], $app['limit.long_running']);
         };
 
         //#####################################################
