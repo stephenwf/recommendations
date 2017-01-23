@@ -2,7 +2,7 @@
 
 namespace eLife\Recommendations\Response;
 
-use DateTime;
+use DateTimeImmutable;
 use eLife\Api\Response\Common\Image;
 use eLife\Api\Response\Common\Published;
 use eLife\Api\Response\Common\SnippetFields;
@@ -50,7 +50,7 @@ final class PodcastEpisode implements Snippet, Result
         string $title,
         string $impactStatement = null,
         array $subjects,
-        DateTime $published,
+        DateTimeImmutable $published,
         ImageResponse $image = null,
         array $sources = null
     ) {
@@ -81,7 +81,7 @@ final class PodcastEpisode implements Snippet, Result
             $episode->getSubjects()->map(function (Subject $subject) {
                 return SubjectResponse::fromModel($subject);
             })->toArray(),
-            DateTime::createFromFormat('Y-m-d\TH:i:sP', $episode->getPublishedDate()->format('Y-m-d\TH:i:sP')),
+            $episode->getPublishedDate(),
             ImageResponse::fromModels($banner, $thumbnail),
             array_map(function (PodcastEpisodeSource $source) {
                 return SourcesResponse::fromModel($source);
