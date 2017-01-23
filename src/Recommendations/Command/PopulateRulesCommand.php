@@ -40,6 +40,9 @@ final class PopulateRulesCommand extends PopulateCommand
 
     public function processModel(string $type, $model)
     {
+        $this->logger->debug("{$this->getName()} Importing model from SDK", [
+            'type' => $type,
+        ]);
         $this->rules->importFromSdk($model, $type);
     }
 }

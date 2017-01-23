@@ -42,12 +42,12 @@ final class Rules
         if ($model instanceof PodcastEpisode) {
             // Import podcast.
             $ruleModel = new RuleModel($model->getNumber(), 'podcast-episode', $model->getPublishedDate());
-            $this->logger->debug("We got $type with {$model->getNumber()}");
+            $this->logger->debug("Found $type, assumed PodcastEpisode with number {$model->getNumber()}");
         } elseif (method_exists($model, 'getId') && $type) {
             $published = method_exists($model, 'getPublishedDate') ? $model->getPublishedDate() : null;
             // Import et al.
             $ruleModel = new RuleModel($model->getId(), $type, $published);
-            $this->logger->debug("We got {$type} with {$model->getId()}");
+            $this->logger->debug("Found {$type}, with id {$model->getId()}");
         } else {
             // Not good, not et al.
             $this->logger->alert('Unknown model type', [

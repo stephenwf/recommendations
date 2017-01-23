@@ -31,6 +31,10 @@ final class MysqlRepoQueueCommand extends QueueCommand
 
     protected function process(InputInterface $input, QueueItem $model)
     {
+        $this->logger->debug("{$this->getName()} Adding model to queue", [
+            'type' => $model->getType(),
+            'id' => $model->getId(),
+        ]);
         $this->rules->import(new RuleModel($model->getId(), $model->getType()));
     }
 }

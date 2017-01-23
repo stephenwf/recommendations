@@ -51,12 +51,21 @@ class GenerateDatabaseCommand extends Command
         $references->setPrimaryKey(['on_id', 'subject_id']);
         $references->addForeignKeyConstraint($rules, ['on_id'], ['rule_id'], ['onUpdate' => 'CASCADE']);
         $references->addForeignKeyConstraint($rules, ['subject_id'], ['rule_id'], ['onUpdate' => 'CASCADE']);
+        // Create table drop statements.
         $drops = [];
         if ($input->getOption('drop')) {
             $drops = $schema->toDropSql(new MySQL57Platform());
+            $this->logger->debug('Dropping with sql:', [
+                'sql' => implode("\n", $drops),
+            ]);
         }
-        $arrayOfSqlQueries = array_merge($drops, $schema->toSql(new MySQL57Platform()));
-
+        // Create table insert statements.
+        $inserts = $schema->toSql(new MySQL57Platform());
+        $this->logger->debug('Populating with sql:', [
+            'sql' => implode("\n", $inserts),
+        ]);
+        $arrayOfSqlQueries = array_merge($drops, $inserts);
+        // Loop through and execute statements.
         foreach ($arrayOfSqlQueries as $query) {
             try {
                 $this->db->exec($query);

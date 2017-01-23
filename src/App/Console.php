@@ -77,7 +77,7 @@ final class Console
     {
         $this->logger->warning('Clearing cache...');
         try {
-            exec('rm -rf '.$this->root.'/cache/*');
+            exec('rm -rf '.$this->root.'/var/cache/*');
         } catch (Exception $e) {
             $this->logger->error($e);
         }
