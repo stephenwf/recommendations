@@ -8,7 +8,6 @@
 
 namespace eLife\Recommendations;
 
-use DateTime;
 use DateTimeImmutable;
 
 class RuleModel
@@ -24,7 +23,7 @@ class RuleModel
         $this->id = $id;
         $this->type = $type;
         $this->isSynthetic = $isSynthetic;
-        $this->published = $published ? DateTime::createFromFormat('Y-m-d\TH:i:sP', $published->format('Y-m-d\TH:i:sP')) : null;
+        $this->published = $published;
         $this->rule_id = $rule_id;
     }
 

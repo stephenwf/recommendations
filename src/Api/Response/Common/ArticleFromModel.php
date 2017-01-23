@@ -2,7 +2,7 @@
 
 namespace eLife\Api\Response\Common;
 
-use DateTime;
+use DateTimeImmutable;
 use eLife\Api\Response\ImageResponse;
 use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\ApiSdk\Model\ArticleVoR;
@@ -17,8 +17,8 @@ trait ArticleFromModel
         string $impactStatement = null,
         string $titlePrefix = null,
         string $authorLine,
-        DateTime $published,
-        DateTime $statusDate,
+        DateTimeImmutable $published,
+        DateTimeImmutable $statusDate,
         int $volume,
         int $version,
         int $issue = null,
@@ -57,8 +57,8 @@ trait ArticleFromModel
             $article instanceof ArticleVoR ? $article->getImpactStatement() : null,
             $article->getTitlePrefix(),
             $article->getAuthorLine(),
-            DateTime::createFromFormat('Y-m-d\TH:i:sP', $article->getPublishedDate()->format('Y-m-d\TH:i:sP')),
-            DateTime::createFromFormat('Y-m-d\TH:i:sP', $article->getStatusDate()->format('Y-m-d\TH:i:sP')),
+            $article->getPublishedDate(),
+            $article->getStatusDate(),
             $article->getVolume(),
             $article->getVersion(),
             $article->getIssue(),
