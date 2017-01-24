@@ -153,7 +153,7 @@ final class Kernel implements MinimalKernel
             if ($app['debug'] && defined('PULI_FACTORY_CLASS') === false) {
                 throw new LogicException('
                     Puli cannot be found in your composer auto-loader, please downgrade composer to 
-                    composer 1.0.0 beta 2 (`composer self-update 1.0.0-beta2`) and your puli to 
+                    composer 1.0.3 (`composer self-update 1.0.3`) and your puli to 
                     puli beta 10 (`curl -sS -L https://github.com/puli/cli/releases/download/1.0.0-beta10/puli.phar`)
                 ');
             }
@@ -392,7 +392,7 @@ final class Kernel implements MinimalKernel
     {
         /** @var LoggerInterface $logger */
         $logger = $this->get('logger');
-        $logger->critical('An unhandled exception was thrown', [
+        $logger->error('An unhandled exception was thrown', [
             'exception' => $e,
         ]);
 
@@ -426,14 +426,19 @@ final class Kernel implements MinimalKernel
     {
         try {
             if (strpos($response->headers->get('Content-Type'), 'json')) {
-                $this->app['puli.validator']->validate(
-                    $this->app['psr7.bridge']->createResponse($response)
+                $this->get('puli.validator')->validate(
+                    $this->get('psr7.bridge')->createResponse($response)
                 );
             }
         } catch (Throwable $e) {
             if ($this->app['config']['debug']) {
                 throw $e;
             }
+            $this->get('logger')->warning('Invalid JSON provided to user', [
+                'exception' => $e,
+                'request' => $request,
+                'response' => $response,
+            ]);
         }
     }
 
