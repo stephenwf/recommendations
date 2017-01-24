@@ -41,12 +41,15 @@ use JMS\Serializer\SerializerBuilder;
 use Kevinrob\GuzzleCache\CacheMiddleware;
 use Kevinrob\GuzzleCache\Storage\DoctrineCacheStorage;
 use Kevinrob\GuzzleCache\Strategy\PublicCacheStrategy;
+use LogicException;
+use Psr\Log\LoggerInterface;
 use Silex\Application;
 use Silex\Provider;
 use Silex\Provider\DoctrineServiceProvider;
 use Silex\Provider\VarDumperServiceProvider;
 use Sorien\Provider\DoctrineProfilerServiceProvider;
 use Symfony\Bridge\PsrHttpMessage\Factory\DiactorosFactory;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
@@ -55,6 +58,7 @@ use Webmozart\Json\JsonDecoder;
 final class Kernel implements MinimalKernel
 {
     const ROOT = __DIR__.'/../..';
+    const CACHE_DIR = self::ROOT.'/var/cache';
 
     public static $routes = [
         '/recommendations/{type}/{id}' => 'indexAction',
@@ -109,7 +113,7 @@ final class Kernel implements MinimalKernel
             $app->register(new Provider\ServiceControllerServiceProvider());
             $app->register(new Provider\TwigServiceProvider());
             $app->register(new Provider\WebProfilerServiceProvider(), [
-                'profiler.cache_dir' => self::ROOT.'/var/cache/profiler',
+                'profiler.cache_dir' => self::CACHE_DIR.'/profiler',
                 'profiler.mount_prefix' => '/_profiler', // this is the default
             ]);
             $app->register(new DoctrineProfilerServiceProvider());
@@ -138,14 +142,21 @@ final class Kernel implements MinimalKernel
                     // Configure discriminators and subscribers here.
                     $dispatcher->addSubscriber(new RecommendationResultDiscriminator());
                 })
-                ->setCacheDir(self::ROOT.'/var/cache')
+                ->setCacheDir(self::CACHE_DIR)
                 ->build();
         };
         $app['serializer.context'] = function () {
             return SerializationContext::create();
         };
         // Puli.
-        $app['puli.factory'] = function () {
+        $app['puli.factory'] = function (Application $app) {
+            if ($app['debug'] && defined('PULI_FACTORY_CLASS') === false) {
+                throw new LogicException('
+                    Puli cannot be found in your composer auto-loader, please downgrade composer to 
+                    composer 1.0.3 (`composer self-update 1.0.3`) and your puli to 
+                    puli beta 10 (`curl -sS -L https://github.com/puli/cli/releases/download/1.0.0-beta10/puli.phar`)
+                ');
+            }
             $factoryClass = PULI_FACTORY_CLASS;
 
             return new $factoryClass();
@@ -156,7 +167,7 @@ final class Kernel implements MinimalKernel
         };
         // General cache.
         $app['cache'] = function () {
-            return new FilesystemCache(self::ROOT.'/var/cache');
+            return new FilesystemCache(self::CACHE_DIR);
         };
         // Annotation reader.
         $app['annotations.reader'] = function (Application $app) {
@@ -299,7 +310,14 @@ final class Kernel implements MinimalKernel
         };
 
         $app['console.queue'] = function (Application $app) {
-            return new MysqlRepoQueueCommand($app['rules.process'], $app['logger'], $app['aws.queue'], $app['aws.queue_transformer'], $app['monitoring'], $app['limit.long_running']);
+            return new MysqlRepoQueueCommand(
+                $app['rules.process'],
+                $app['logger'],
+                $app['aws.queue'],
+                $app['aws.queue_transformer'],
+                $app['monitoring'],
+                $app['limit.long_running']
+            );
         };
 
         //#####################################################
@@ -339,7 +357,7 @@ final class Kernel implements MinimalKernel
         };
 
         $app['default_controller'] = function (Application $app) {
-            return new DefaultController($app['rules.process'], $app['hydration'], $app['serializer'], $app['rules.repository']);
+            return new DefaultController($app['rules.process'], $app['hydration'], $app['serializer'], $app['rules.repository'], $app['logger']);
         };
     }
 
@@ -372,7 +390,18 @@ final class Kernel implements MinimalKernel
 
     public function handleException($e): Response
     {
-        return $response;
+        /** @var LoggerInterface $logger */
+        $logger = $this->get('logger');
+        $logger->error('An unhandled exception was thrown', [
+            'exception' => $e,
+        ]);
+
+        $errorMessage = '
+            Internal server error – We are unable to server your request, 
+            but it has been logged and we will look into the issue.
+        ';
+        // This should never be hit, it is a last resort.
+        return new JsonResponse(['error' => trim($errorMessage)], 500);
     }
 
     public function withApp(callable $fn)
@@ -397,14 +426,19 @@ final class Kernel implements MinimalKernel
     {
         try {
             if (strpos($response->headers->get('Content-Type'), 'json')) {
-                $this->app['puli.validator']->validate(
-                    $this->app['psr7.bridge']->createResponse($response)
+                $this->get('puli.validator')->validate(
+                    $this->get('psr7.bridge')->createResponse($response)
                 );
             }
         } catch (Throwable $e) {
             if ($this->app['config']['debug']) {
                 throw $e;
             }
+            $this->get('logger')->warning('Invalid JSON provided to user', [
+                'exception' => $e,
+                'request' => $request,
+                'response' => $response,
+            ]);
         }
     }
 
