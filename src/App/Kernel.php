@@ -307,7 +307,7 @@ final class Kernel implements MinimalKernel
         };
 
         $app['console.generate_database'] = function (Application $app) {
-            return new GenerateDatabaseCommand($app['db'], $app['logger']);
+            return new GenerateDatabaseCommand($app['db'], $app['logger'], $app['monitoring']);
         };
 
         $app['console.queue'] = function (Application $app) {
