@@ -13,19 +13,23 @@ namespace eLife\Recommendations\Process;
 use BadMethodCallException;
 use eLife\ApiSdk\Model\Model;
 use eLife\ApiSdk\Model\PodcastEpisode;
+use eLife\Logging\Monitoring;
 use eLife\Recommendations\Rule;
 use eLife\Recommendations\RuleModel;
 use Psr\Log\LoggerInterface;
+use Throwable;
 
 final class Rules
 {
     private $rules;
     private $logger;
+    private $monitoring;
 
-    public function __construct(LoggerInterface $logger, Rule ...$rules)
+    public function __construct(Monitoring $monitoring, LoggerInterface $logger, Rule ...$rules)
     {
         $this->rules = $rules;
         $this->logger = $logger;
+        $this->monitoring = $monitoring;
     }
 
     public function isSupported(RuleModel $model, Rule $rule)
@@ -56,8 +60,16 @@ final class Rules
             ]);
         }
         if ($ruleModel) {
-            // Import.
-            $this->import($ruleModel);
+            $this->monitoring->nameTransaction("Importing {$ruleModel->getType()}<{$ruleModel->getId()}>");
+            $this->monitoring->startTransaction();
+            try {
+                // Import.
+                $this->import($ruleModel);
+            } catch (Throwable $e) {
+                $this->monitoring->recordException($e);
+                throw $e;
+            }
+            $this->monitoring->endTransaction();
         }
     }
 

@@ -5,6 +5,7 @@ namespace eLife\Recommendations\Command;
 use Doctrine\DBAL\Driver\Connection;
 use Doctrine\DBAL\Platforms\MySQL57Platform;
 use Doctrine\DBAL\Schema\Schema;
+use eLife\Logging\Monitoring;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -16,11 +17,16 @@ class GenerateDatabaseCommand extends Command
 {
     private $db;
     private $logger;
+    private $monitoring;
 
-    public function __construct(Connection $db, LoggerInterface $logger)
-    {
+    public function __construct(
+        Connection $db,
+        LoggerInterface $logger,
+        Monitoring $monitoring
+    ) {
         $this->db = $db;
         $this->logger = $logger;
+        $this->monitoring = $monitoring;
 
         parent::__construct(null);
     }
@@ -30,12 +36,13 @@ class GenerateDatabaseCommand extends Command
         $this
             ->setName('generate:database')
             ->setDescription('Creates schema for recommendations database.')
-            ->addOption('drop', 'd', InputOption::VALUE_NONE)
-        ;
+            ->addOption('drop', 'd', InputOption::VALUE_NONE);
     }
 
     public function execute(InputInterface $input, OutputInterface $output)
     {
+        $this->monitoring->nameTransaction('Scheme creation');
+        $this->monitoring->startTransaction();
         $schema = new Schema();
         $rules = $schema->createTable('Rules');
         $rules->addColumn('rule_id', 'guid');
@@ -70,11 +77,14 @@ class GenerateDatabaseCommand extends Command
             try {
                 $this->db->exec($query);
             } catch (Throwable $e) {
+                $this->monitoring->recordException($e, 'Problem creating database schema.');
                 $this->logger->error($e->getMessage(), ['exception' => $e]);
+                $this->monitoring->endTransaction();
 
                 return;
             }
         }
+        $this->monitoring->endTransaction();
         $this->logger->info('Database created successfully.');
     }
 }
