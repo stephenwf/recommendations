@@ -2,6 +2,7 @@
 
 namespace eLife\Tests\Process;
 
+use eLife\Logging\Monitoring;
 use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule;
@@ -9,12 +10,24 @@ use eLife\Recommendations\RuleModel;
 use Mockery;
 use PHPUnit_Framework_TestCase;
 use Psr\Log\NullLogger;
+use ReflectionObject;
 
 final class RulesTest extends PHPUnit_Framework_TestCase
 {
     private $rule1;
     private $rule2;
     private $rule_empty;
+
+    public function getMonitoringMock(): Monitoring
+    {
+        $monitoring = new Monitoring();
+        $reflectionObject = new ReflectionObject($monitoring);
+        $reflectionProperty = $reflectionObject->getProperty('extension');
+        $reflectionProperty->setAccessible(true);
+        $reflectionProperty->setValue($monitoring, null);
+
+        return $monitoring;
+    }
 
     public function setUp()
     {
@@ -41,18 +54,18 @@ final class RulesTest extends PHPUnit_Framework_TestCase
 
     public function testAggregatingAddRelations()
     {
-        $rules = new Rules(new NullLogger(), $this->rule1, $this->rule2);
+        $rules = new Rules($this->getMonitoringMock(), new NullLogger(), $this->rule1, $this->rule2);
         $actual = $rules->getRecommendations(new RuleModel('1', 'article'));
         $this->assertEquals([
-            [
-                'type' => 'podcast-episode',
-                'id' => 1,
-            ],
-            [
-                'type' => 'article',
-                'id' => 2,
-            ],
-        ], $actual);
+                                [
+                                    'type' => 'podcast-episode',
+                                    'id' => 1,
+                                ],
+                                [
+                                    'type' => 'article',
+                                    'id' => 2,
+                                ],
+                            ], $actual);
     }
 
     public function testImport()
@@ -65,7 +78,7 @@ final class RulesTest extends PHPUnit_Framework_TestCase
             ->shouldReceive('upsert')
             ->andReturn(null)
             ->once();
-        $rules = new Rules(new NullLogger(), $this->rule2);
+        $rules = new Rules($this->getMonitoringMock(), new NullLogger(), $this->rule2);
         $rules->import(new RuleModel('1', 'article'), true);
     }
 
@@ -80,7 +93,7 @@ final class RulesTest extends PHPUnit_Framework_TestCase
         $this->rule_empty
             ->shouldReceive('upsert')
             ->never();
-        $rules = new Rules(new NullLogger(), $this->rule_empty);
+        $rules = new Rules($this->getMonitoringMock(), new NullLogger(), $this->rule_empty);
         $rules->import(new RuleModel('1', 'not-article'), true);
     }
 
@@ -93,7 +106,7 @@ final class RulesTest extends PHPUnit_Framework_TestCase
         $this->rule2
             ->shouldReceive('upsert')
             ->never();
-        $rules = new Rules(new NullLogger(), $this->rule2);
+        $rules = new Rules($this->getMonitoringMock(), new NullLogger(), $this->rule2);
         $rules->import(new RuleModel('1', 'article'), false);
     }
 
@@ -103,7 +116,7 @@ final class RulesTest extends PHPUnit_Framework_TestCase
             ->shouldReceive('supports')
             ->andReturn(['article']);
         $this->expectException('BadMethodCallException');
-        $rules = new Rules(new NullLogger(), $this->rule2);
+        $rules = new Rules($this->getMonitoringMock(), new NullLogger(), $this->rule2);
         $rules->import(new RuleModel('1', 'article'), false, true);
     }
 }

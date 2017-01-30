@@ -239,6 +239,7 @@ final class Kernel implements MinimalKernel
 
         $app['rules.process'] = function (Application $app) {
             return new Rules(
+                $app['monitoring'],
                 $app['logger'],
                 new NormalizedPersistence(
                     $app['rules.repository'],
