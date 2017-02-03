@@ -107,7 +107,7 @@ class RuleModelRepository
     public function get(RuleModel $ruleModel)
     {
         $prepared = $this->db->prepare('SELECT Rules.rule_id FROM Rules WHERE Rules.id = ? AND Rules.type = ? LIMIT 1;');
-        $prepared->bindParam(1, $ruleModel->getId());
+        $prepared->bindValue(1, $ruleModel->getId());
         $prepared->bindValue(2, $ruleModel->getType());
         $prepared->execute();
 
