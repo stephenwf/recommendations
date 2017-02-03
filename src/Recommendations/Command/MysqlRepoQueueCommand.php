@@ -29,6 +29,15 @@ final class MysqlRepoQueueCommand extends QueueCommand
         parent::__construct($logger, $queue, $transformer, $monitoring, $limit, false);
     }
 
+    protected function configure()
+    {
+        $this
+            ->setName('queue:watch')
+            ->setDescription('Create queue watcher')
+            ->setHelp('Creates process that will watch for incoming items on a queue')
+            ->addArgument('id', InputArgument::OPTIONAL, 'Identifier to distinguish workers from each other');
+    }
+
     protected function process(InputInterface $input, QueueItem $model, $entity = null)
     {
         $type = method_exists($entity, 'getType') ? $entity->getType() : $model->getType();
