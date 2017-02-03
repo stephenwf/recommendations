@@ -11,6 +11,7 @@ use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\RuleModel;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\InputArgument;
 
 final class MysqlRepoQueueCommand extends QueueCommand
 {
