@@ -52,6 +52,7 @@ trait GetSdk
                 return $this->sdk->collections();
                 break;
 
+            // are these needed?
             case 'correction':
             case 'editorial':
             case 'feature':
@@ -64,6 +65,9 @@ trait GetSdk
             case 'replication-study':
             case 'short-report':
             case 'tools-resources':
+            // end of -- are these needed?
+
+            case 'article':
                 return $this->sdk->articles();
                 break;
 
