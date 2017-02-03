@@ -66,7 +66,7 @@ trait GetSdk
             case 'short-report':
             case 'tools-resources':
             // end of -- are these needed?
-                
+
             case 'article':
                 return $this->sdk->articles();
                 break;
