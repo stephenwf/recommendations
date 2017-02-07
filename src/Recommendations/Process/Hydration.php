@@ -56,16 +56,10 @@ final class Hydration
             return $entity->wait(true);
         }
 
-        return $entity->then(function (Model $model) {
-            if (
-                method_exists($model, 'getType') &&
-                method_exists($model, 'getId')
-            ) {
-                $this->cache[$model->getType()][$model->getId()] = $model;
-                // @todo enable if required.
-                // $this->extractRelatedFrom(new RuleModel($model->getId(), $model->getType()));
-            }
-
+        return $entity->then(function (ArticleVersion $model) {
+            $this->cache[$model->getType()][$model->getId()] = $model;
+            // @todo enable if required.
+            // $this->extractRelatedFrom(new RuleModel($model->getId(), $model->getType()));
             return $model;
         });
     }
