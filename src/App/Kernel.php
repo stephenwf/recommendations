@@ -54,6 +54,7 @@ use Symfony\Bridge\PsrHttpMessage\Factory\DiactorosFactory;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 use Webmozart\Json\JsonDecoder;
 
@@ -400,20 +401,32 @@ final class Kernel implements MinimalKernel
         }
     }
 
-    public function handleException($e): Response
+    public function handleException(Throwable $e): Response
     {
         /** @var LoggerInterface $logger */
         $logger = $this->get('logger');
-        $logger->error('An unhandled exception was thrown', [
+        if ($e instanceof HttpException) {
+            $logger->error('An http exception was thrown', [
+                'exception' => $e,
+            ]);
+
+            return new JsonResponse(array_filter([
+                'error' => $e->getMessage(),
+                'trace' => $this->app['config']['debug'] ? $e->getTraceAsString() : null,
+            ]), $e->getCode());
+        }
+        $logger->error('An unknown exception was thrown', [
             'exception' => $e,
         ]);
-
         $errorMessage = '
             Internal server error – We are unable to server your request, 
             but it has been logged and we will look into the issue.
         ';
         // This should never be hit, it is a last resort.
-        return new JsonResponse(['error' => trim($errorMessage)], 500);
+        return new JsonResponse(array_filter([
+            'error' => trim($errorMessage),
+            'trace' => $this->app['config']['debug'] ? $e->getTraceAsString() : null,
+        ]), 500);
     }
 
     public function withApp(callable $fn)
