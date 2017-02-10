@@ -246,21 +246,34 @@ final class Kernel implements MinimalKernel
                 $app['logger'],
                 new NormalizedPersistence(
                     $app['rules.repository'],
-                    /* 1 */ new BidirectionalRelationship($app['api.sdk'], 'retraction', $app['rules.repository'], $app['logger']),
-                    /* 2 */ new BidirectionalRelationship($app['api.sdk'], 'correction', $app['rules.repository'], $app['logger']),
+                    /* 1 */
+                    new BidirectionalRelationship($app['api.sdk'], 'retraction', $app['rules.repository'], $app['logger']),
+                    /* 2 */
+                    new BidirectionalRelationship($app['api.sdk'], 'correction', $app['rules.repository'], $app['logger']),
                     /* 3 is part of BidirectionalRelationship. */
-                    /* 4 */ new BidirectionalRelationship($app['api.sdk'], 'research-article', $app['rules.repository'], $app['logger']),
-                    /* 5 */ new BidirectionalRelationship($app['api.sdk'], 'research-exchange', $app['rules.repository'], $app['logger']),
-                    /* 6 */ new BidirectionalRelationship($app['api.sdk'], 'research-advance', $app['rules.repository'], $app['logger']),
-                    /* 7 */ new BidirectionalRelationship($app['api.sdk'], 'tools-resources', $app['rules.repository'], $app['logger']),
-                    /* 8 */ new BidirectionalRelationship($app['api.sdk'], 'feature', $app['rules.repository'], $app['logger']),
-                    /* 9 */ new BidirectionalRelationship($app['api.sdk'], 'insight', $app['rules.repository'], $app['logger']),
-                    /* 10 */ new BidirectionalRelationship($app['api.sdk'], 'editorial', $app['rules.repository'], $app['logger']),
-                    /* 11 */ new CollectionContents($app['api.sdk'], $app['rules.repository']),
-                    /* 12 */ new PodcastEpisodeContents($app['api.sdk'], $app['rules.repository'])
+                    /* 4 */
+                    new BidirectionalRelationship($app['api.sdk'], 'research-article', $app['rules.repository'], $app['logger']),
+                    /* 5 */
+                    new BidirectionalRelationship($app['api.sdk'], 'research-exchange', $app['rules.repository'], $app['logger']),
+                    /* 6 */
+                    new BidirectionalRelationship($app['api.sdk'], 'research-advance', $app['rules.repository'], $app['logger']),
+                    /* 7 */
+                    new BidirectionalRelationship($app['api.sdk'], 'tools-resources', $app['rules.repository'], $app['logger']),
+                    /* 8 */
+                    new BidirectionalRelationship($app['api.sdk'], 'feature', $app['rules.repository'], $app['logger']),
+                    /* 9 */
+                    new BidirectionalRelationship($app['api.sdk'], 'insight', $app['rules.repository'], $app['logger']),
+                    /* 10 */
+                    new BidirectionalRelationship($app['api.sdk'], 'editorial', $app['rules.repository'], $app['logger']),
+                    /* 11 */
+                    new CollectionContents($app['api.sdk'], $app['rules.repository']),
+                    /* 12 */
+                    new PodcastEpisodeContents($app['api.sdk'], $app['rules.repository'])
                 ),
-                /* 13 */ new MostRecent($app['rules.repository'], $app['logger']),
-                /* 14 */ new MostRecentWithSubject($app['api.sdk'], $app['rules.repository'], $app['logger'])
+                /* 13 */
+                new MostRecent($app['rules.repository'], $app['logger']),
+                /* 14 */
+                new MostRecentWithSubject($app['api.sdk'], $app['rules.repository'], $app['logger'])
             );
         };
 
@@ -423,10 +436,13 @@ final class Kernel implements MinimalKernel
             but it has been logged and we will look into the issue.
         ';
         // This should never be hit, it is a last resort.
-        return new JsonResponse(array_filter([
-            'error' => trim($errorMessage),
-            'trace' => $this->app['config']['debug'] ? $e->getTraceAsString() : null,
-        ]), 500);
+        return new JsonResponse(
+            $this->app['config']['debug'] ? [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ] : [
+                'error' => trim($errorMessage),
+            ], 500);
     }
 
     public function withApp(callable $fn)
