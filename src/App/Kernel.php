@@ -54,6 +54,7 @@ use Symfony\Bridge\PsrHttpMessage\Factory\DiactorosFactory;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 use Webmozart\Json\JsonDecoder;
 
@@ -245,21 +246,34 @@ final class Kernel implements MinimalKernel
                 $app['logger'],
                 new NormalizedPersistence(
                     $app['rules.repository'],
-                    /* 1 */ new BidirectionalRelationship($app['api.sdk'], 'retraction', $app['rules.repository'], $app['logger']),
-                    /* 2 */ new BidirectionalRelationship($app['api.sdk'], 'correction', $app['rules.repository'], $app['logger']),
+                    /* 1 */
+                    new BidirectionalRelationship($app['api.sdk'], 'retraction', $app['rules.repository'], $app['logger']),
+                    /* 2 */
+                    new BidirectionalRelationship($app['api.sdk'], 'correction', $app['rules.repository'], $app['logger']),
                     /* 3 is part of BidirectionalRelationship. */
-                    /* 4 */ new BidirectionalRelationship($app['api.sdk'], 'research-article', $app['rules.repository'], $app['logger']),
-                    /* 5 */ new BidirectionalRelationship($app['api.sdk'], 'research-exchange', $app['rules.repository'], $app['logger']),
-                    /* 6 */ new BidirectionalRelationship($app['api.sdk'], 'research-advance', $app['rules.repository'], $app['logger']),
-                    /* 7 */ new BidirectionalRelationship($app['api.sdk'], 'tools-resources', $app['rules.repository'], $app['logger']),
-                    /* 8 */ new BidirectionalRelationship($app['api.sdk'], 'feature', $app['rules.repository'], $app['logger']),
-                    /* 9 */ new BidirectionalRelationship($app['api.sdk'], 'insight', $app['rules.repository'], $app['logger']),
-                    /* 10 */ new BidirectionalRelationship($app['api.sdk'], 'editorial', $app['rules.repository'], $app['logger']),
-                    /* 11 */ new CollectionContents($app['api.sdk'], $app['rules.repository']),
-                    /* 12 */ new PodcastEpisodeContents($app['api.sdk'], $app['rules.repository'])
+                    /* 4 */
+                    new BidirectionalRelationship($app['api.sdk'], 'research-article', $app['rules.repository'], $app['logger']),
+                    /* 5 */
+                    new BidirectionalRelationship($app['api.sdk'], 'research-exchange', $app['rules.repository'], $app['logger']),
+                    /* 6 */
+                    new BidirectionalRelationship($app['api.sdk'], 'research-advance', $app['rules.repository'], $app['logger']),
+                    /* 7 */
+                    new BidirectionalRelationship($app['api.sdk'], 'tools-resources', $app['rules.repository'], $app['logger']),
+                    /* 8 */
+                    new BidirectionalRelationship($app['api.sdk'], 'feature', $app['rules.repository'], $app['logger']),
+                    /* 9 */
+                    new BidirectionalRelationship($app['api.sdk'], 'insight', $app['rules.repository'], $app['logger']),
+                    /* 10 */
+                    new BidirectionalRelationship($app['api.sdk'], 'editorial', $app['rules.repository'], $app['logger']),
+                    /* 11 */
+                    new CollectionContents($app['api.sdk'], $app['rules.repository']),
+                    /* 12 */
+                    new PodcastEpisodeContents($app['api.sdk'], $app['rules.repository'])
                 ),
-                /* 13 */ new MostRecent($app['rules.repository'], $app['logger']),
-                /* 14 */ new MostRecentWithSubject($app['api.sdk'], $app['rules.repository'], $app['logger'])
+                /* 13 */
+                new MostRecent($app['rules.repository'], $app['logger']),
+                /* 14 */
+                new MostRecentWithSubject($app['api.sdk'], $app['rules.repository'], $app['logger'])
             );
         };
 
@@ -400,20 +414,35 @@ final class Kernel implements MinimalKernel
         }
     }
 
-    public function handleException($e): Response
+    public function handleException(Throwable $e): Response
     {
         /** @var LoggerInterface $logger */
         $logger = $this->get('logger');
-        $logger->error('An unhandled exception was thrown', [
+        if ($e instanceof HttpException) {
+            $logger->error('An http exception was thrown', [
+                'exception' => $e,
+            ]);
+
+            return new JsonResponse(array_filter([
+                'error' => $e->getMessage(),
+                'trace' => $this->app['config']['debug'] ? $e->getTraceAsString() : null,
+            ]), $e->getCode());
+        }
+        $logger->error('An unknown exception was thrown', [
             'exception' => $e,
         ]);
-
         $errorMessage = '
             Internal server error – We are unable to server your request, 
             but it has been logged and we will look into the issue.
         ';
         // This should never be hit, it is a last resort.
-        return new JsonResponse(['error' => trim($errorMessage)], 500);
+        return new JsonResponse(
+            $this->app['config']['debug'] ? [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ] : [
+                'error' => trim($errorMessage),
+            ], 500);
     }
 
     public function withApp(callable $fn)
