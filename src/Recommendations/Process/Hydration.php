@@ -14,64 +14,51 @@ use Assert\Assertion;
 use eLife\ApiSdk\ApiSdk;
 use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\ApiSdk\Model\HasSubjects;
-use eLife\ApiSdk\Model\Model;
-use eLife\Recommendations\Rule\Common\GetSdk;
+use eLife\Bus\Queue\SingleItemRepository;
 use eLife\Recommendations\RuleModel;
-use function GuzzleHttp\Promise\all;
 
 final class Hydration
 {
-    use GetSdk;
-
-    /** @var ApiSdk */
-    private $sdk;
     private $cache = [];
+    private $repo;
+    private $sdk;
 
-    public function transform(RuleModel $item)
+    public function __construct(ApiSdk $sdk, SingleItemRepository $repo)
     {
-        $sdk = $this->getSdk($item->getType());
-        $entity = $sdk->get($item->getId());
-
-        return $entity->wait(true);
-    }
-
-    public function __construct(ApiSdk $sdk)
-    {
+        $this->repo = $repo;
         $this->sdk = $sdk;
     }
 
-    /**
-     * This is quite a basic model conversion, if we start offering
-     * recommendations for other items such as podcast episodes then
-     * this will have to change. (getId doesn't exist on podcasts).
-     */
-    private function getModel(RuleModel $model, $unwrap = false)
+    public function convertType(string $type): string
     {
-        if (isset($this->cache[$model->getType()][$model->getId()])) {
-            return $this->cache[$model->getType()][$model->getId()];
+        switch ($type) {
+            case 'article':
+            case 'correction':
+            case 'editorial':
+            case 'feature':
+            case 'insight':
+            case 'research-advance':
+            case 'research-article':
+            case 'research-exchange':
+            case 'retraction':
+            case 'registered-report':
+            case 'replication-study':
+            case 'short-report':
+            case 'tools-resources':
+                return 'article';
+            default:
+                return $type;
         }
-        $sdk = $this->getSdk($model->getType());
-        $entity = $sdk->get($model->getId());
-        if ($unwrap) {
-            return $entity->wait(true);
-        }
-
-        return $entity->then(function (ArticleVersion $model) {
-            $this->cache[$model->getType()][$model->getId()] = $model;
-            // @todo enable if required.
-            // $this->extractRelatedFrom(new RuleModel($model->getId(), $model->getType()));
-            return $model;
-        });
     }
 
-    public function hydrateOne(RuleModel $model)
+    public function hydrateOne(RuleModel $item)
     {
-        return $this->getModel($model);
+        return $this->repo->get($this->convertType($item->getType()), $item->getId());
     }
 
     public function extractRelatedFrom(RuleModel $model)
     {
-        $model = $this->getModel($model, true);
+        $model = $this->hydrateOne($model);
         if ($model instanceof HasSubjects) {
             $this->cache['subjects'] = $this->cache['subjects'] ?? [];
             /** @var $model ArticleVersion */
@@ -94,11 +81,11 @@ final class Hydration
      *
      * @return array
      */
-    public function hydrateAll(array $rules) : array
+    public function hydrateAll(array $rules): array
     {
         Assertion::allIsInstanceOf($rules, RuleModel::class);
         $entities = array_map([$this, 'hydrateOne'], $rules);
 
-        return all($entities)->wait(true);
+        return $entities;
     }
 }
