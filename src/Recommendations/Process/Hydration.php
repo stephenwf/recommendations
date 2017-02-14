@@ -14,6 +14,9 @@ use Assert\Assertion;
 use eLife\ApiSdk\ApiSdk;
 use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\ApiSdk\Model\HasSubjects;
+use eLife\ApiSdk\Model\PodcastEpisode;
+use eLife\ApiSdk\Model\PodcastEpisodeChapter;
+use eLife\ApiSdk\Model\PodcastEpisodeChapterModel;
 use eLife\Bus\Queue\SingleItemRepository;
 use eLife\Recommendations\RuleModel;
 
@@ -51,8 +54,34 @@ final class Hydration
         }
     }
 
+    public function getPodcastEpisodeChapterById($id): PodcastEpisodeChapterModel
+    {
+        list($episodeId, $chapterId) = explode('-', $id);
+        // I want to be able to do this in list :(
+        $episodeId = (int) $episodeId;
+        $chapterId = (int) $chapterId;
+
+        /** @var PodcastEpisode $episode */
+        $episode = $this->repo->get('podcast-episode', $episodeId);
+        $chapter = $episode
+                ->getChapters()
+                ->filter(function (PodcastEpisodeChapter $chapter) use ($chapterId) {
+                    return $chapter->getNumber() === $chapterId;
+                })
+                ->toArray()[0] ?? null;
+
+        return new PodcastEpisodeChapterModel($episode, $chapter);
+    }
+
     public function hydrateOne(RuleModel $item)
     {
+        if ($item->isSynthetic()) {
+            switch ($item->getType()) {
+                case 'podcast-episode-chapter':
+                    return $this->getPodcastEpisodeChapterById($item->getId());
+            }
+        }
+
         return $this->repo->get($this->convertType($item->getType()), $item->getId());
     }
 
