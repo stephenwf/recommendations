@@ -2,7 +2,7 @@
 
 namespace eLife\Recommendations\Response;
 
-use eLife\ApiSdk\Model\PodcastEpisodeChapter;
+use eLife\ApiSdk\Model\PodcastEpisodeChapter as ApiSdkPodcastEpisodeChapter;
 use JMS\Serializer\Annotation\Since;
 use JMS\Serializer\Annotation\Type;
 
@@ -44,7 +44,7 @@ class PodcastChapter
         $this->impactStatement = $impactStatement;
     }
 
-    public static function fromModel(PodcastEpisodeChapter $chapter)
+    public static function fromModel(ApiSdkPodcastEpisodeChapter $chapter)
     {
         return new static(
             $chapter->getNumber(),
