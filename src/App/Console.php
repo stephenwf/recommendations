@@ -52,7 +52,9 @@ final class Console
             $this->console->add($app->get('console.populate_rules'));
             $this->console->add($app->get('console.queue'));
         } catch (Throwable $e) {
-            // Do nothing.
+            $this->logger->warning('Some commands failed to load', [
+                'exception' => $e,
+            ]);
         }
     }
 
