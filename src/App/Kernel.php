@@ -18,7 +18,7 @@ use eLife\Bus\Limit\CompositeLimit;
 use eLife\Bus\Limit\LoggingMiddleware;
 use eLife\Bus\Limit\MemoryLimit;
 use eLife\Bus\Limit\SignalsLimit;
-use eLife\Bus\Queue\SqsMessageTransformer;
+use eLife\Bus\Queue\CachedTransformer;
 use eLife\Bus\Queue\SqsWatchableQueue;
 use eLife\Logging\LoggingFactory;
 use eLife\Logging\Monitoring;
@@ -304,7 +304,7 @@ final class Kernel implements MinimalKernel
         };
 
         $app['aws.queue_transformer'] = function (Application $app) {
-            return new SqsMessageTransformer($app['api.sdk']);
+            return new CachedTransformer($app['api.sdk'], $app['cache'], $app['logger'], 3600);
         };
 
         //#####################################################
@@ -379,7 +379,7 @@ final class Kernel implements MinimalKernel
         };
 
         $app['hydration'] = function (Application $app) {
-            return new Hydration($app['api.sdk']);
+            return new Hydration($app['api.sdk'], $app['aws.queue_transformer']);
         };
 
         $app['default_controller'] = function (Application $app) {
