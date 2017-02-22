@@ -57,6 +57,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 use Webmozart\Json\JsonDecoder;
+use function GuzzleHttp\json_encode;
 
 final class Kernel implements MinimalKernel
 {
@@ -70,9 +71,11 @@ final class Kernel implements MinimalKernel
     ];
 
     private $app;
+    private $startTime;
 
     public function __construct($config = [])
     {
+        $this->startTime = microtime(true);
         $app = new Application();
         if (file_exists(self::ROOT.'/config/db.ini')) {
             $ini = parse_ini_string(file_get_contents(self::ROOT.'/config/db.ini'), true);
@@ -440,6 +443,7 @@ final class Kernel implements MinimalKernel
             $this->app['config']['debug'] ? [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+                'time' => microtime(true) - $this->startTime,
             ] : [
                 'error' => trim($errorMessage),
             ], 500);
@@ -473,7 +477,12 @@ final class Kernel implements MinimalKernel
             }
         } catch (Throwable $e) {
             if ($this->app['config']['debug']) {
-                throw $e;
+                $json = json_decode($response->getContent());
+                $json->_validationInfo = $e->getMessage();
+                $json->_time = microtime(true) - $this->startTime;
+                $response->setContent(json_encode($json));
+
+                return $response;
             }
             $this->get('logger')->warning('Invalid JSON provided to user', [
                 'exception' => $e,

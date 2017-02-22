@@ -6,11 +6,11 @@ use eLife\ApiSdk\Model\ArticlePoA;
 use eLife\ApiSdk\Model\ArticleVoR;
 use eLife\ApiSdk\Model\Collection as CollectionModel;
 use eLife\ApiSdk\Model\ExternalArticle as ExternalArticleModel;
-use eLife\ApiSdk\Model\PodcastEpisode as PodcastEpisodeModel;
+use eLife\ApiSdk\Model\PodcastEpisodeChapterModel;
 use eLife\Recommendations\Response\Collection;
 use eLife\Recommendations\Response\ExternalArticle;
 use eLife\Recommendations\Response\PoaArticle;
-use eLife\Recommendations\Response\PodcastEpisode;
+use eLife\Recommendations\Response\PodcastEpisodeChapter;
 use eLife\Recommendations\Response\VorArticle;
 use JMS\Serializer\Annotation\Since;
 use JMS\Serializer\Annotation\Type;
@@ -47,8 +47,8 @@ final class RecommendationsResponse
                     return ExternalArticle::fromModel($model);
                 case CollectionModel::class:
                     return Collection::fromModel($model);
-                case PodcastEpisodeModel::class:
-                    return PodcastEpisode::fromModel($model);
+                case PodcastEpisodeChapterModel::class:
+                    return PodcastEpisodeChapter::fromModel($model);
                 default:
                     return;
             }

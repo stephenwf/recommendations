@@ -23,20 +23,19 @@ final class ImageThumbnailResponse implements ImageVariant
 
     public function https()
     {
-        $sizes = $this->makeHttps($this->sizes);
+        $sizes = self::makeHttps($this->sizes);
 
         return new static(
             $this->alt, $sizes
         );
     }
 
-    private function makeHttps($urls)
+    private static function makeHttps($urls)
     {
         $sizes = [];
         foreach ($urls as $url) {
             foreach ($url as $k => $size) {
-                //                $sizes[$k] = str_replace(['http:/', 'internal_elife_dummy_api'], ['https:/', 'internal_elife_dummy_api.com'], $size);
-                $sizes[$k] = 'https://www.wat.com/image/'.$k.'.jpg';
+                $sizes[$k] = str_replace(['http:/', 'internal_elife_dummy_api'], ['https:/', 'dummyapi.com'], $size);
             }
         }
 
@@ -73,9 +72,9 @@ final class ImageThumbnailResponse implements ImageVariant
             }
         }
 
-        return new static(
+        return (new static(
             $image->getAltText(),
             $images
-        );
+        ))->https();
     }
 }

@@ -95,7 +95,7 @@ class RuleModelRepository
           FROM Rules
           LEFT JOIN `References` AS R ON Rules.rule_id = R.subject_id
           WHERE R.on_id = ?
-          AND Rules.isSynthetic = 0
+          AND Rules.type != "subject"
           ORDER BY Rules.published;
         ');
         $prepared->bindValue(1, $model['rule_id']);

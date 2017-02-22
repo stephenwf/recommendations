@@ -42,16 +42,20 @@ final class Console
             ->getDefinition()
             ->addOption(new InputOption('--env', '-e', InputOption::VALUE_REQUIRED, 'The Environment name.', 'dev'));
 
+        // Set up logger.
+        $this->logger = $app->get('logger');
+
         try {
             // Add custom commands.
             $this->console->add($app->get('console.generate_database'));
             $this->console->add($app->get('console.queue_count'));
             $this->console->add($app->get('console.queue_clean'));
-            // Set up logger.
-            $this->logger = $app->get('logger');
             $this->console->add($app->get('console.populate_rules'));
             $this->console->add($app->get('console.queue'));
         } catch (Throwable $e) {
+            $this->logger->warning('Some commands failed to load', [
+                'exception' => $e,
+            ]);
         }
     }
 

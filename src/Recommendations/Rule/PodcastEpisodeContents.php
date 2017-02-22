@@ -40,11 +40,14 @@ class PodcastEpisodeContents implements Rule
             $relations[] = $content->filter(function ($content) {
                 // Only article for now in this rule.
                 return $content instanceof Article;
-            })->map(function (ArticleVersion $article) use ($input) {
+            })->map(function (ArticleVersion $article) use ($input, $chapter) {
                 $type = $article instanceof ExternalArticle ? 'external-article' : 'research-article';
                 $date = $article instanceof ArticleVersion ? $article->getPublishedDate() : null;
                 // Link this podcast TO the related item.
-                return new ManyToManyRelationship(new RuleModel($article->getId(), $type, $date), $input);
+                return new ManyToManyRelationship(
+                    new RuleModel($article->getId(), $type, $date),
+                    new RuleModel("{$input->getId()}-{$chapter->getNumber()}", 'podcast-episode-chapter', null, true)
+                );
             })->toArray();
         }
 
@@ -55,6 +58,7 @@ class PodcastEpisodeContents implements Rule
     {
         return [
             'podcast-episode',
+            'podcast-episode-chapter',
         ];
     }
 }

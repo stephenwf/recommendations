@@ -4,13 +4,17 @@ namespace eLife\Tests\Response;
 
 use DateTimeImmutable;
 use Doctrine\Common\Annotations\AnnotationRegistry;
+use eLife\ApiSdk\Collection\ArraySequence;
 use eLife\ApiSdk\Model\ArticlePoA;
 use eLife\ApiSdk\Model\ArticleVoR;
 use eLife\ApiSdk\Model\Collection as CollectionModel;
 use eLife\ApiSdk\Model\ExternalArticle as ExternalArticleModel;
 use eLife\ApiSdk\Model\Image;
 use eLife\ApiSdk\Model\ImageSize;
+use eLife\ApiSdk\Model\PodcastEpisode;
 use eLife\ApiSdk\Model\PodcastEpisode as PodcastEpisodeModel;
+use eLife\ApiSdk\Model\PodcastEpisodeChapter as PodcastEpisodeChapterM;
+use eLife\ApiSdk\Model\PodcastEpisodeChapterModel;
 use eLife\ApiValidator\MessageValidator\JsonMessageValidator;
 use eLife\ApiValidator\SchemaFinder\PuliSchemaFinder;
 use eLife\Recommendations\RecommendationResultDiscriminator;
@@ -77,11 +81,12 @@ class RecommendationResponseTest extends PHPUnit_Framework_TestCase
 
         $collection = $builder
             ->create(CollectionModel::class)
+            ->withPublishedDate(new DateTimeImmutable())
             ->withImpactStatement('Tropical disease impact statement')
             ->__invoke();
 
-        $podcast = $builder
-            ->create(PodcastEpisodeModel::class)
+        $podcastEpisode = $builder
+            ->create(PodcastEpisode::class)
             ->withThumbnail(
                 new Image('alt', [
                     new ImageSize('16:9', [
@@ -96,6 +101,10 @@ class RecommendationResponseTest extends PHPUnit_Framework_TestCase
             )
             ->__invoke();
 
+        $podcastChapter = new PodcastEpisodeChapterM(2, 'something title', 300, null, new ArraySequence([]));
+
+        $podcast = new PodcastEpisodeChapterModel($podcastEpisode, $podcastChapter);
+
         $PoaArticle = $builder
             ->create(ArticlePoA::class)
             ->withPublished(new DateTimeImmutable())
@@ -108,8 +117,10 @@ class RecommendationResponseTest extends PHPUnit_Framework_TestCase
 
         // Build recommendations.
         $recommendations = RecommendationsResponse::fromModels([$collection, $podcast, $PoaArticle, $VoRArticle, $externalArticle, new StdClass()], 1);
+
         // Should not throw.
         $json = $this->serializer->serialize($recommendations, 'json', $this->context);
+
         $response = new Response($json, 200, [
             'Content-Type' => 'application/vnd.elife.recommendations+json;version=1',
         ]);
