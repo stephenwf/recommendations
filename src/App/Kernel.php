@@ -9,6 +9,7 @@ use Doctrine\Common\Annotations\AnnotationRegistry;
 use Doctrine\Common\Annotations\CachedReader;
 use Doctrine\Common\Cache\FilesystemCache;
 use eLife\ApiClient\HttpClient\Guzzle6HttpClient;
+use eLife\ApiClient\HttpClient\UserAgentPrependingHttpClient;
 use eLife\ApiSdk\ApiSdk;
 use eLife\ApiValidator\MessageValidator\JsonMessageValidator;
 use eLife\ApiValidator\SchemaFinder\PuliSchemaFinder;
@@ -44,6 +45,7 @@ use Kevinrob\GuzzleCache\CacheMiddleware;
 use Kevinrob\GuzzleCache\Storage\DoctrineCacheStorage;
 use Kevinrob\GuzzleCache\Strategy\PublicCacheStrategy;
 use LogicException;
+use PackageVersions\Versions;
 use Psr\Log\LoggerInterface;
 use Silex\Application;
 use Silex\Provider;
@@ -72,10 +74,23 @@ final class Kernel implements MinimalKernel
 
     private $app;
     private $startTime;
+    private $version;
 
     public function __construct($config = [])
     {
         $this->startTime = microtime(true);
+
+        $originalVersion = Versions::getVersion('elife/recommendations');
+        list($version, $reference) = explode('@', $originalVersion);
+        if (false !== strpos($version, 'dev')) {
+            if (40 === strlen($reference)) {
+                $version = implode('@', [$version, substr($reference, 0, 7)]);
+            } else {
+                $version = $originalVersion;
+            }
+        }
+
+        $this->version = $version;
         $app = new Application();
         if (file_exists(self::ROOT.'/config/db.ini')) {
             $ini = parse_ini_string(file_get_contents(self::ROOT.'/config/db.ini'), true);
@@ -375,8 +390,11 @@ final class Kernel implements MinimalKernel
 
         $app['api.sdk'] = function (Application $app) {
             return new ApiSdk(
-                new Guzzle6HttpClient(
-                    $app['guzzle']
+                new UserAgentPrependingHttpClient(
+                    new Guzzle6HttpClient(
+                        $app['guzzle']
+                    ),
+                    'elifeRecommendations/'.$this->version
                 )
             );
         };
