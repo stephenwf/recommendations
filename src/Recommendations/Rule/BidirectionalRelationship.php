@@ -22,18 +22,15 @@ class BidirectionalRelationship implements Rule
     use RepoRelations;
 
     private $sdk;
-    private $type;
     private $repo;
     private $logger;
 
     public function __construct(
         ApiSdk $sdk,
-        string $type,
         RuleModelRepository $repo,
         LoggerInterface $logger = null
     ) {
         $this->sdk = $sdk;
-        $this->type = $type;
         $this->repo = $repo;
         $this->logger = $logger;
     }
@@ -66,7 +63,7 @@ class BidirectionalRelationship implements Rule
      */
     public function resolveRelations(RuleModel $input): array
     {
-        $this->logger->debug('Looking for '.$this->type.' articles related to Article<'.$input->getId().'>');
+        $this->logger->debug('Looking for articles related to Article<'.$input->getId().'>');
         try {
             $related = $this->getRelatedArticles($input->getId());
 
@@ -85,11 +82,6 @@ class BidirectionalRelationship implements Rule
         return $related
             ->filter(function ($item) {
                 return $item instanceof Article;
-            })
-            ->filter(function (Article $article) {
-                $this->logger->debug('Found related article id: '.$article->getId().' and type: '.$this->type);
-
-                return $article->getType() === $this->type;
             })
             ->map(function (Article $article) use ($input) {
                 $type = $article instanceof ExternalArticleModel ? 'external-article' : 'research-article';
