@@ -100,7 +100,7 @@ class GenerateDatabaseCommand extends Command
 
         try {
             // Only need to create references since its cascades.
-            $this->createTables($drop, $references);
+            $this->createTables($drop, $rules);
         } catch (Throwable $e) {
             $this->monitoring->recordException($e, 'Problem creating database schema.');
             $this->logger->error($e->getMessage(), ['exception' => $e]);
