@@ -100,8 +100,16 @@ class GenerateDatabaseCommand extends Command
         $references->addForeignKeyConstraint($rules, ['subject_id'], ['rule_id'], ['onUpdate' => 'CASCADE']);
 
         try {
+            if ($drop) {
+                // Disable foreign key checks
+                $this->db->query(sprintf('SET FOREIGN_KEY_CHECKS=%s', (int) false));
+            }
             // Only need to create references since its cascades.
             $this->createTables($drop, $rules);
+            if ($drop) {
+                // Re-enable foreign key checks.
+                $this->db->query(sprintf('SET FOREIGN_KEY_CHECKS=%s', (int) true));
+            }
         } catch (Throwable $e) {
             $this->monitoring->recordException($e, 'Problem creating database schema.');
             $this->logger->error($e->getMessage(), ['exception' => $e]);
