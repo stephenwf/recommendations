@@ -50,10 +50,11 @@ class GenerateDatabaseCommand extends Command
     {
         foreach ($tables as $table) {
             if ($drop) {
-                $this->db->getSchemaManager()->dropAndCreateTable($table);
-            } else {
-                $this->db->getSchemaManager()->createTable($table);
+                $this->db->getSchemaManager()->dropTable($table->getName());
             }
+        }
+        foreach ($tables as $table) {
+            $this->db->getSchemaManager()->createTable($table);
         }
     }
 
