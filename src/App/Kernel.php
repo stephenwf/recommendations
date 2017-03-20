@@ -101,7 +101,7 @@ final class Kernel implements MinimalKernel
             'debug' => false,
             'validate' => false,
             'annotation_cache' => true,
-            'ttl' => 3600,
+            'ttl' => 300,
             'process_memory_limit' => 200,
             'file_logs_path' => self::ROOT.'/var/logs',
             'tables' => [
@@ -482,8 +482,6 @@ final class Kernel implements MinimalKernel
                 $json->_validationInfo = $e->getMessage();
                 $json->_time = microtime(true) - $this->startTime;
                 $response->setContent(json_encode($json));
-
-                return $response;
             }
             $this->get('logger')->warning('Invalid JSON provided to user', [
                 'exception' => $e,
@@ -491,9 +489,20 @@ final class Kernel implements MinimalKernel
                 'response' => $response,
             ]);
         }
+
+        return $response;
     }
 
     public function cache(Request $request, Response $response)
     {
+        $response->setMaxAge($this->app['config']['ttl']);
+        $response->headers->set('stale-while-revalidate', $this->app['config']['ttl']);
+        $response->headers->set('stale-if-error', 86400);
+        $response->setVary('Accept');
+        $response->setEtag(md5($response->getContent()));
+        $response->setPublic();
+        $response->isNotModified($request);
+
+        return $response;
     }
 }
