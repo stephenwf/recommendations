@@ -35,11 +35,15 @@ class RuleModelRepository
 
     public function getLatestArticle()
     {
+        // Research Advance, Research Article, Research Exchange, Short Report, Tools and Resources or Replication Study article
         $prepared = $this->db->prepare('
           SELECT * FROM Rules 
-          WHERE Rules.type!="subject" 
-          AND Rules.type!="collection" 
-          AND Rules.type!="podcast-episode" 
+          WHERE Rules.type ="research-advance"
+          OR Rules.type ="research-article"
+          OR Rules.type ="research-exchange"
+          OR Rules.type ="short-report"
+          OR Rules.type ="tools-resources"
+          OR Rules.type ="replication-study" 
           ORDER BY Rules.published DESC
           LIMIT 40
         ');

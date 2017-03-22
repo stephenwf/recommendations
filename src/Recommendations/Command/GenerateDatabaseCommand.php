@@ -50,10 +50,11 @@ class GenerateDatabaseCommand extends Command
     {
         foreach ($tables as $table) {
             if ($drop) {
-                $this->db->getSchemaManager()->dropAndCreateTable($table);
-            } else {
-                $this->db->getSchemaManager()->createTable($table);
+                $this->db->getSchemaManager()->dropTable($table->getName());
             }
+        }
+        foreach ($tables as $table) {
+            $this->db->getSchemaManager()->createTable($table);
         }
     }
 
@@ -99,8 +100,16 @@ class GenerateDatabaseCommand extends Command
         $references->addForeignKeyConstraint($rules, ['subject_id'], ['rule_id'], ['onUpdate' => 'CASCADE']);
 
         try {
+            if ($drop) {
+                // Disable foreign key checks
+                $this->db->query(sprintf('SET FOREIGN_KEY_CHECKS=%s', (int) false));
+            }
             // Only need to create references since its cascades.
-            $this->createTables($drop, $references);
+            $this->createTables($drop, $rules);
+            if ($drop) {
+                // Re-enable foreign key checks.
+                $this->db->query(sprintf('SET FOREIGN_KEY_CHECKS=%s', (int) true));
+            }
         } catch (Throwable $e) {
             $this->monitoring->recordException($e, 'Problem creating database schema.');
             $this->logger->error($e->getMessage(), ['exception' => $e]);
