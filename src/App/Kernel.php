@@ -348,7 +348,6 @@ final class Kernel implements MinimalKernel
         //#####################################################
 
         $app['guzzle'] = function (Application $app) {
-
             return new Client(['base_uri' => $app['config']['api_url']]);
         };
 
