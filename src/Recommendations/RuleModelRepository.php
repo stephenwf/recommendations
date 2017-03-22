@@ -12,9 +12,11 @@ class RuleModelRepository
 {
     private $db;
 
-    public function __construct(Connection $conn)
+    public function __construct(Connection $conn, array $config)
     {
         $this->db = $conn;
+        $this->ruleTableName = $this->db->quoteIdentifier($config['rules'] || 'Rules');
+        $this->referencesTableName = $this->db->quoteIdentifier($config['references'] || 'References');
     }
 
     public function mapAll(array $items)
@@ -36,11 +38,11 @@ class RuleModelRepository
     public function getLatestArticle()
     {
         $prepared = $this->db->prepare('
-          SELECT * FROM Rules 
-          WHERE Rules.type!="subject" 
-          AND Rules.type!="collection" 
-          AND Rules.type!="podcast-episode" 
-          ORDER BY Rules.published DESC
+          SELECT * FROM '.$this->ruleTableName.' as Ru 
+          WHERE Ru.type!="subject" 
+          AND Ru.type!="collection" 
+          AND Ru.type!="podcast-episode" 
+          ORDER BY Ru.published DESC
           LIMIT 40
         ');
         $prepared->execute();
@@ -53,9 +55,9 @@ class RuleModelRepository
     {
         $prepared = $this->db->prepare('
           SELECT onRule.rule_id, onRule.id, onRule.type, onRule.published, onRule.isSynthetic 
-          FROM `References` as Ref 
-          JOIN `Rules` onRule on Ref.on_id = onRule.rule_id 
-          JOIN `Rules` subjectRule on Ref.subject_id = subjectRule.rule_id 
+          FROM '.$this->referencesTableName.' as Ref 
+          JOIN '.$this->ruleTableName.' onRule on Ref.on_id = onRule.rule_id 
+          JOIN '.$this->ruleTableName.' subjectRule on Ref.subject_id = subjectRule.rule_id 
           WHERE subjectRule.type=\'subject\' 
           AND subjectRule.id=? 
           ORDER BY onRule.published DESC
@@ -73,10 +75,10 @@ class RuleModelRepository
     public function slice(int $offset, int $count)
     {
         $prepared = $this->db->prepare('
-          SELECT Rules.rule_id, Rules.id, Rules.type, Rules.published, Rules.isSynthetic 
-          FROM Rules
-          WHERE Rules.type != \'subject\'
-          ORDER BY Rules.published
+          SELECT Ru.rule_id, Ru.id, Ru.type, Ru.published, Ru.isSynthetic 
+          FROM '.$this->ruleTableName.' as Ru
+          WHERE Ru.type != \'subject\'
+          ORDER BY R.published
           LIMIT ? 
           OFFSET ?;
         ');
@@ -91,12 +93,12 @@ class RuleModelRepository
     {
         $model = $this->get($ruleModel);
         $prepared = $this->db->prepare('
-          SELECT Rules.rule_id, Rules.id, Rules.type, Rules.published, Rules.isSynthetic 
-          FROM Rules
-          LEFT JOIN `References` AS R ON Rules.rule_id = R.subject_id
-          WHERE R.on_id = ?
-          AND Rules.type != "subject"
-          ORDER BY Rules.published;
+          SELECT Ru.rule_id, Ru.id, Ru.type, Ru.published, Ru.isSynthetic 
+          FROM '.$this->ruleTableName.' as Ru
+          LEFT JOIN  '.$this->referencesTableName.' AS Re ON Ru.rule_id = Re.subject_id
+          WHERE Re.on_id = ?
+          AND Ru.type != "subject"
+          ORDER BY Ru.published;
         ');
         $prepared->bindValue(1, $model['rule_id']);
         $prepared->execute();
@@ -106,7 +108,7 @@ class RuleModelRepository
 
     public function get(RuleModel $ruleModel)
     {
-        $prepared = $this->db->prepare('SELECT Rules.rule_id FROM Rules WHERE Rules.id = ? AND Rules.type = ? LIMIT 1;');
+        $prepared = $this->db->prepare('SELECT Ru.rule_id FROM '.$this->ruleTableName.' as Ru WHERE Ru.id = ? AND Ru.type = ? LIMIT 1;');
         $prepared->bindValue(1, $ruleModel->getId());
         $prepared->bindValue(2, $ruleModel->getType());
         $prepared->execute();
@@ -117,7 +119,7 @@ class RuleModelRepository
     public function insert(RuleModel $ruleModel)
     {
         $ruleModel->setRuleId(Uuid::uuid4());
-        $this->db->insert('Rules', [
+        $this->db->insert($this->ruleTableName, [
             'rule_id' => $ruleModel->getRuleId(),
             'id' => $ruleModel->getId(),
             'type' => $ruleModel->getType(),
@@ -151,7 +153,7 @@ class RuleModelRepository
 
     public function hasRelation(ManyToManyRelationship $relationship)
     {
-        $prepared = $this->db->prepare('SELECT on_id, subject_id FROM `References` WHERE on_id = ? AND subject_id = ? LIMIT 1;');
+        $prepared = $this->db->prepare('SELECT on_id, subject_id FROM '.$this->referencesTableName.' WHERE on_id = ? AND subject_id = ? LIMIT 1;');
         $prepared->bindValue(1, $relationship->getOn()->getRuleId());
         $prepared->bindValue(2, $relationship->getSubject()->getRuleId());
         $prepared->execute();
@@ -164,7 +166,7 @@ class RuleModelRepository
         $on = $this->upsert($relationship->getOn());
         $subject = $this->upsert($relationship->getSubject());
         if (!$this->hasRelation($relationship)) {
-            $this->db->insert($this->db->quoteIdentifier('References'), [
+            $this->db->insert($this->referencesTableName, [
                 'on_id' => $on->getRuleId(),
                 'subject_id' => $subject->getRuleId(),
             ], [

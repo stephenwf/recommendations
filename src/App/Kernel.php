@@ -76,6 +76,11 @@ final class Kernel implements MinimalKernel
     private $startTime;
     private $version;
 
+    public function getApp()
+    {
+        return $this->app;
+    }
+
     public function __construct($config = [])
     {
         $this->startTime = microtime(true);
@@ -106,6 +111,10 @@ final class Kernel implements MinimalKernel
             'ttl' => 3600,
             'process_memory_limit' => 200,
             'file_logs_path' => self::ROOT.'/var/logs',
+            'tables' => [
+                'rules' => 'Rules',
+                'references' => 'References',
+            ],
             'db' => array_merge([
                 'driver' => 'pdo_mysql',
                 'host' => '127.0.0.1',
@@ -238,7 +247,7 @@ final class Kernel implements MinimalKernel
         // ------------------ Rule Specific --------------------
         //######################################################
         $app['rules.repository'] = function (Application $app) {
-            return new RuleModelRepository($app['db']);
+            return new RuleModelRepository($app['db'], $app['config']['tables']);
         };
 
         $app['rules.process'] = function (Application $app) {
