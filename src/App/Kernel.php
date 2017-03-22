@@ -38,14 +38,10 @@ use eLife\Recommendations\Rule\NormalizedPersistence;
 use eLife\Recommendations\Rule\PodcastEpisodeContents;
 use eLife\Recommendations\RuleModelRepository;
 use GuzzleHttp\Client;
-use GuzzleHttp\HandlerStack;
 use JMS\Serializer\EventDispatcher\EventDispatcher;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\SerializerBuilder;
 use JsonSchema\Validator;
-use Kevinrob\GuzzleCache\CacheMiddleware;
-use Kevinrob\GuzzleCache\Storage\DoctrineCacheStorage;
-use Kevinrob\GuzzleCache\Strategy\PublicCacheStrategy;
 use PackageVersions\Versions;
 use Psr\Log\LoggerInterface;
 use Silex\Application;
@@ -352,22 +348,9 @@ final class Kernel implements MinimalKernel
         //#####################################################
 
         $app['guzzle'] = function (Application $app) {
-            // Create default HandlerStack
-            $stack = HandlerStack::create();
-            $stack->push(
-                new CacheMiddleware(
-                    new PublicCacheStrategy(
-                        new DoctrineCacheStorage(
-                            $app['cache']
-                        )
-                    )
-                ),
-                'cache'
-            );
 
             return new Client([
                 'base_uri' => $app['config']['api_url'],
-                'handler' => $stack,
             ]);
         };
 
