@@ -4,13 +4,18 @@ namespace eLife\App;
 
 use Aws\Sqs\SqsClient;
 use Closure;
+use eLife\Bus\Queue\InternalSqsMessage;
+use eLife\Bus\Queue\WatchableQueue;
 use Exception;
 use LogicException;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Question\ChoiceQuestion;
+use Symfony\Component\Console\Question\Question;
 use Throwable;
 
 final class Console
@@ -19,6 +24,14 @@ final class Console
         'cache:clear' => ['description' => 'Clears cache'],
         'debug:params' => ['description' => 'Lists current parameters'],
         'queue:create' => ['description' => 'Lists current parameters'],
+        'queue:interactive' => ['description' => 'Manually enqueue item into SQS. (interactive)'],
+        'queue:push' => [
+            'description' => 'Manually enqueue item into SQS.',
+            'args' => [
+                ['name' => 'type'],
+                ['name' => 'id'],
+            ],
+        ],
         'query:count' => [
             'description' => 'Runs query from bin/queries folder',
             'args' => [
@@ -57,6 +70,42 @@ final class Console
                 'exception' => $e,
             ]);
         }
+    }
+
+    public function queuePushCommand(InputInterface $input, OutputInterface $output)
+    {
+        $id = $input->getArgument('id');
+        $type = $input->getArgument('type');
+        // Enqueue.
+        $this->enqueue($type, $id);
+    }
+
+    private function enqueue($type, $id)
+    {
+        // Create queue item.
+        $item = new InternalSqsMessage($type, $id);
+        /** @var $queue WatchableQueue */
+        $queue = $this->app->get('aws.queue');
+        // Queue item.
+        $queue->enqueue($item);
+        $this->logger->info('Item added successfully.');
+    }
+
+    public function queueInteractiveCommand(InputInterface $input, OutputInterface $output)
+    {
+        $helper = new QuestionHelper();
+        // Get the type.
+        $choice = new ChoiceQuestion('<question>Which type would you like to import</question>', [
+            'article',
+            'podcast-episode',
+            'collection',
+        ], 0);
+        $type = $helper->ask($input, $output, $choice);
+        // Ge the Id.
+        $choice = new Question('<question>Whats the ID of the item to import: </question>');
+        $id = $helper->ask($input, $output, $choice);
+        // Enqueue.
+        $this->enqueue($type, $id);
     }
 
     public function queryCountCommand(InputInterface $input, OutputInterface $output)

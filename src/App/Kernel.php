@@ -256,25 +256,8 @@ final class Kernel implements MinimalKernel
                 $app['logger'],
                 new NormalizedPersistence(
                     $app['rules.repository'],
-                    /* 1 */
-                    new BidirectionalRelationship($app['api.sdk'], 'retraction', $app['rules.repository'], $app['logger']),
-                    /* 2 */
-                    new BidirectionalRelationship($app['api.sdk'], 'correction', $app['rules.repository'], $app['logger']),
-                    /* 3 is part of BidirectionalRelationship. */
-                    /* 4 */
-                    new BidirectionalRelationship($app['api.sdk'], 'research-article', $app['rules.repository'], $app['logger']),
-                    /* 5 */
-                    new BidirectionalRelationship($app['api.sdk'], 'research-exchange', $app['rules.repository'], $app['logger']),
-                    /* 6 */
-                    new BidirectionalRelationship($app['api.sdk'], 'research-advance', $app['rules.repository'], $app['logger']),
-                    /* 7 */
-                    new BidirectionalRelationship($app['api.sdk'], 'tools-resources', $app['rules.repository'], $app['logger']),
-                    /* 8 */
-                    new BidirectionalRelationship($app['api.sdk'], 'feature', $app['rules.repository'], $app['logger']),
-                    /* 9 */
-                    new BidirectionalRelationship($app['api.sdk'], 'insight', $app['rules.repository'], $app['logger']),
-                    /* 10 */
-                    new BidirectionalRelationship($app['api.sdk'], 'editorial', $app['rules.repository'], $app['logger']),
+                    /* 1 - 10 */
+                    new BidirectionalRelationship($app['api.sdk'], $app['rules.repository'], $app['logger']),
                     /* 11 */
                     new CollectionContents($app['api.sdk'], $app['rules.repository']),
                     /* 12 */
