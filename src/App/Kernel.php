@@ -73,11 +73,6 @@ final class Kernel implements MinimalKernel
     private $startTime;
     private $version;
 
-    public function getApp()
-    {
-        return $this->app;
-    }
-
     public function __construct($config = [], $autoRun = true)
     {
         $this->startTime = microtime(true);
@@ -159,6 +154,11 @@ final class Kernel implements MinimalKernel
     {
         // Add to class once set up.
         $this->app = $this->applicationFlow($this->app);
+    }
+
+    public function getApp()
+    {
+        return $this->app;
     }
 
     public function dependencies(Application $app)
