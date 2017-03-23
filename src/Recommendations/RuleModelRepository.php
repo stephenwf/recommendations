@@ -15,8 +15,8 @@ class RuleModelRepository
     public function __construct(Connection $conn, string $rulesTableName, string $referencesTableName)
     {
         $this->db = $conn;
-        $this->ruleTableName = $this->db->quoteIdentifier($rulesTableName);
-        $this->referencesTableName = $this->db->quoteIdentifier($referencesTableName);
+        $this->ruleTableName = "`$rulesTableName`";
+        $this->referencesTableName = "`$referencesTableName`";
     }
 
     public function mapAll(array $items)
