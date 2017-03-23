@@ -21,6 +21,7 @@ use eLife\Bus\Limit\LoggingMiddleware;
 use eLife\Bus\Limit\MemoryLimit;
 use eLife\Bus\Limit\SignalsLimit;
 use eLife\Bus\Queue\CachedTransformer;
+use eLife\Bus\Queue\SingleItemRepository;
 use eLife\Bus\Queue\SqsWatchableQueue;
 use eLife\Logging\LoggingFactory;
 use eLife\Logging\Monitoring;
@@ -81,7 +82,7 @@ final class Kernel implements MinimalKernel
         return $this->app;
     }
 
-    public function __construct($config = [])
+    public function __construct($config = [], $autoRun = true)
     {
         $this->startTime = microtime(true);
 
@@ -155,7 +156,13 @@ final class Kernel implements MinimalKernel
         // DI.
         $this->dependencies($app);
         // Add to class once set up.
-        $this->app = $this->applicationFlow($app);
+        $this->app = $autoRun ? $this->applicationFlow($app) : $app;
+    }
+
+    public function setupFlow()
+    {
+        // Add to class once set up.
+        $this->app = $this->applicationFlow($this->app);
     }
 
     public function dependencies(Application $app)
@@ -247,7 +254,11 @@ final class Kernel implements MinimalKernel
         // ------------------ Rule Specific --------------------
         //######################################################
         $app['rules.repository'] = function (Application $app) {
-            return new RuleModelRepository($app['db'], $app['config']['tables']);
+            return new RuleModelRepository(
+                $app['db'],
+                $app['config']['tables']['rules'],
+                $app['config']['tables']['references']
+            );
         };
 
         $app['rules.process'] = function (Application $app) {
@@ -266,7 +277,7 @@ final class Kernel implements MinimalKernel
                 /* 13 */
                 new MostRecent($app['rules.repository'], $app['logger']),
                 /* 14 */
-                new MostRecentWithSubject($app['api.sdk'], $app['rules.repository'], $app['logger'])
+                new MostRecentWithSubject($app['hydration.single_item_repository'], $app['api.sdk'], $app['rules.repository'], $app['logger'])
             );
         };
 
@@ -317,7 +328,13 @@ final class Kernel implements MinimalKernel
         };
 
         $app['console.generate_database'] = function (Application $app) {
-            return new GenerateDatabaseCommand($app['db'], $app['logger'], $app['monitoring']);
+            return new GenerateDatabaseCommand(
+                $app['db'],
+                $app['logger'],
+                $app['monitoring'],
+                $app['config']['tables']['rules'],
+                $app['config']['tables']['references']
+            );
         };
 
         $app['console.queue_count'] = function (Application $app) {
@@ -374,8 +391,12 @@ final class Kernel implements MinimalKernel
             );
         };
 
+        $app['hydration.single_item_repository'] = function (Application $app) : SingleItemRepository {
+            return $app['aws.queue_transformer'];
+        };
+
         $app['hydration'] = function (Application $app) {
-            return new Hydration($app['api.sdk'], $app['aws.queue_transformer']);
+            return new Hydration($app['api.sdk'], $app['hydration.single_item_repository']);
         };
 
         $app['default_controller'] = function (Application $app) {
