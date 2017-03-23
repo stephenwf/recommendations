@@ -163,7 +163,7 @@ abstract class WebTestCase extends SilexWebTestCase
     {
         parent::setUp();
         $lines = $this->runCommand('generate:database');
-//        $this->assertStringStartsWith('Database created successfully.', $lines[0], 'Failed to run test during set up');
+        $this->assertStringStartsWith('Database created successfully.', $lines[0], 'Failed to run test during set up');
     }
 
     public function tearDown()
@@ -205,14 +205,10 @@ abstract class WebTestCase extends SilexWebTestCase
 
         $app = new Application();
         $this->kernel->withApp(function ($app) use ($logger, $transformer) {
-//            unset($app['logger']);
-//            $app['logger'] = function () use ($logger) {
-//                return $logger;
-//            };
-//            unset($app['hydration']);
-//            $app['hydration'] = function() {
-//                return $this->hydrator;
-//            };
+            unset($app['logger']);
+            $app['logger'] = function () use ($logger) {
+                return $logger;
+            };
             unset($app['hydration.single_item_repository']);
             $app['hydration.single_item_repository'] = function () use ($transformer) {
                 return $transformer;
