@@ -33,6 +33,11 @@ abstract class WebTestCase extends SilexWebTestCase
     private $itemMocks = [];
     private $transformer;
 
+    public function getAllMocks()
+    {
+        return $this->itemMocks;
+    }
+
     public function addArticlePoAWithId($id, $date = null)
     {
         $builder = Builder::for(ArticlePoA::class);
@@ -46,7 +51,10 @@ abstract class WebTestCase extends SilexWebTestCase
 
         $this->addDocument('article', $id, $PoaArticle);
 
-        return new RuleModel($id, 'research-article', $PoaArticle->getPublishedDate());
+        $model = new RuleModel($id, 'research-article', $PoaArticle->getPublishedDate());
+        $this->getRulesRepo()->upsert($model);
+
+        return $model;
     }
 
     public function addDocument(string $type, string $id, Model $content)
