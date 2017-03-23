@@ -12,6 +12,29 @@ use eLife\Recommendations\Relationships\ManyToManyRelationship;
  */
 class TestingTest extends WebTestCase
 {
+    public function testAddingRule()
+    {
+        $article1 = $this->addArticlePoAWithId('1', (new DateTimeImmutable())->setDate(2017, 1, 1), false);
+        $article2 = $this->addArticlePoAWithId('2', (new DateTimeImmutable())->setDate(2017, 2, 2), false);
+
+        $this->getRulesProcess()->import($article1);
+        $this->getRulesProcess()->import($article2);
+
+        $this->newClient();
+        $this->jsonRequest('GET', '/recommendations/research-article/1');
+        $json = $this->getJsonResponse();
+
+        $this->assertEquals(1, $json->total);
+        $this->assertEquals('2', $json->items[0]->id);
+
+        $this->newClient();
+        $this->jsonRequest('GET', '/recommendations/research-article/2');
+        $json = $this->getJsonResponse();
+
+        $this->assertEquals(1, $json->total);
+        $this->assertEquals('1', $json->items[0]->id);
+    }
+
     public function testTwoArticlesCanRelate()
     {
         $article1 = $this->addArticlePoAWithId('1');

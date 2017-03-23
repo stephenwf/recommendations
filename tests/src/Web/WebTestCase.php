@@ -3,13 +3,16 @@
 namespace tests\eLife\Web;
 
 use Doctrine\DBAL\Connection;
+use eLife\ApiSdk\Collection\ArraySequence;
 use eLife\ApiSdk\Model\ArticlePoA;
 use eLife\ApiSdk\Model\Model;
 use eLife\App\Console;
 use eLife\App\Kernel;
 use eLife\Bus\Queue\SingleItemRepository;
 use eLife\Recommendations\Process\Hydration;
+use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
+use eLife\Recommendations\Rule\Common\MicroSdk;
 use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
 use Psr\Log\NullLogger;
@@ -32,13 +35,16 @@ abstract class WebTestCase extends SilexWebTestCase
     protected $api;
     private $itemMocks = [];
     private $transformer;
+    protected $sdkMock;
+    private $logs = [];
+    private $relatedArticles;
 
     public function getAllMocks()
     {
         return $this->itemMocks;
     }
 
-    public function addArticlePoAWithId($id, $date = null)
+    public function addArticlePoAWithId($id, $date = null, $insert = true)
     {
         $builder = Builder::for(ArticlePoA::class);
         /** @var ArticlePoA $PoaArticle */
@@ -52,7 +58,9 @@ abstract class WebTestCase extends SilexWebTestCase
         $this->addDocument('article', $id, $PoaArticle);
 
         $model = new RuleModel($id, 'research-article', $PoaArticle->getPublishedDate());
-        $this->getRulesRepo()->upsert($model);
+        if ($insert) {
+            $this->getRulesRepo()->upsert($model);
+        }
 
         return $model;
     }
@@ -100,6 +108,8 @@ abstract class WebTestCase extends SilexWebTestCase
             $config = include __DIR__.'/../../../config/ci.php';
         }
 
+        $config['api_url'] = 'http://api.com/';
+
         $config['tables']['rules'] = 'Rules__test';
         $config['tables']['references'] = 'References__test';
 
@@ -109,6 +119,11 @@ abstract class WebTestCase extends SilexWebTestCase
     public function getDatabase(): Connection
     {
         return $this->kernel->getApp()['db'];
+    }
+
+    public function getRulesProcess() : Rules
+    {
+        return $this->kernel->getApp()['rules.process'];
     }
 
     public function getRulesRepo(): RuleModelRepository
@@ -176,9 +191,30 @@ abstract class WebTestCase extends SilexWebTestCase
         parent::tearDown();
     }
 
+    public function setRelatedArticles($id, array $list)
+    {
+        $this->relatedArticles[$id] = new ArraySequence($list);
+    }
+
+    public function getRelatedArticles($id)
+    {
+        return $this->relatedArticles[$id] ?? new ArraySequence([]);
+    }
+
+    public function addLog($log)
+    {
+        $this->logs[] = $log;
+    }
+
+    public function getLogs()
+    {
+        return $this->logs;
+    }
+
     public function runCommand(string $command)
     {
         $log = $this->returnCallback(function ($message) use (&$logs) {
+            $this->addLog($message);
             $logs[] = $message;
         });
         $logs = [];
@@ -188,13 +224,28 @@ abstract class WebTestCase extends SilexWebTestCase
             return $this->itemMocks[$type][$id] ?? null;
         });
         $transformer = $this->createMock(SingleItemRepository::class);
-
         $transformer
             ->expects($this->any())
             ->method('get')
             ->will($transformerCallback);
-
         $this->transformer = $transformer;
+
+        $sdkMock = $this->createMock(MicroSdk::class);
+        $sdkMock
+            ->expects($this->any())
+            ->method('get')
+            ->will($transformerCallback);
+        $sdkMock
+            ->expects($this->any())
+            ->method('getRelatedArticles')
+            ->will(
+                $this->returnCallback(
+                    function ($id) {
+                        return $this->getRelatedArticles($id);
+                    }
+                )
+            );
+        $this->sdkMock = $sdkMock;
 
         foreach (['debug', 'info', 'warning', 'critical', 'emergency', 'alert', 'log', 'notice', 'error'] as $level) {
             $logger
@@ -202,12 +253,15 @@ abstract class WebTestCase extends SilexWebTestCase
                 ->method($level)
                 ->will($log);
         }
-
         $app = new Application();
-        $this->kernel->withApp(function ($app) use ($logger, $transformer) {
+        $this->kernel->withApp(function ($app) use ($logger, $transformer, $sdkMock) {
             unset($app['logger']);
             $app['logger'] = function () use ($logger) {
                 return $logger;
+            };
+            unset($app['rules.micro_sdk']);
+            $app['rules.micro_sdk'] = function () use ($sdkMock) {
+                return $sdkMock;
             };
             unset($app['hydration.single_item_repository']);
             $app['hydration.single_item_repository'] = function () use ($transformer) {

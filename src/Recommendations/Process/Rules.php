@@ -14,6 +14,7 @@ use BadMethodCallException;
 use eLife\ApiSdk\Model\Model;
 use eLife\ApiSdk\Model\PodcastEpisode;
 use eLife\Logging\Monitoring;
+use eLife\Recommendations\Relationships\NoRelationship;
 use eLife\Recommendations\Rule;
 use eLife\Recommendations\RuleModel;
 use Psr\Log\LoggerInterface;
@@ -82,6 +83,11 @@ final class Rules
                 $this->logger->debug('Found relations on model', [
                     'relations' => $relations,
                 ]);
+            } else {
+                $this->logger->debug('No relations found, upserting', [
+                   'model' => $model,
+                ]);
+                $relations = [new NoRelationship($model)];
             }
             if ($upsert) {
                 array_map([$rule, 'upsert'], $relations);

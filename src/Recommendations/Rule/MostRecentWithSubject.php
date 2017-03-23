@@ -2,14 +2,13 @@
 
 namespace eLife\Recommendations\Rule;
 
-use eLife\ApiSdk\ApiSdk;
 use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\ApiSdk\Model\HasSubjects;
 use eLife\ApiSdk\Model\Subject;
 use eLife\Bus\Queue\SingleItemRepository;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule;
-use eLife\Recommendations\Rule\Common\GetSdk;
+use eLife\Recommendations\Rule\Common\MicroSdk;
 use eLife\Recommendations\Rule\Common\PersistRule;
 use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
@@ -18,7 +17,6 @@ use Psr\Log\LoggerInterface;
 
 class MostRecentWithSubject implements Rule
 {
-    use GetSdk;
     use PersistRule;
 
     private $sdk;
@@ -28,7 +26,7 @@ class MostRecentWithSubject implements Rule
 
     public function __construct(
         SingleItemRepository $singleItemRepository,
-        ApiSdk $sdk,
+        MicroSdk $sdk,
         RuleModelRepository $repo,
         LoggerInterface $logger
     ) {
@@ -73,10 +71,15 @@ class MostRecentWithSubject implements Rule
         }
     }
 
+    public function get(RuleModel $input)
+    {
+        return $this->sdk->get($input->getType(), $input->getId());
+    }
+
     public function resolveRelations(RuleModel $input): array
     {
         /** @var HasSubjects $model Added to stop IDE complaining. */
-        $model = $this->getFromSdk($input->getType(), $input->getId());
+        $model = $this->get($input);
         if (!$model instanceof HasSubjects) {
             return [];
         }

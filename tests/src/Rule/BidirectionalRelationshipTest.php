@@ -6,15 +6,12 @@ use eLife\ApiSdk\Collection\ArraySequence;
 use eLife\ApiSdk\Model\Article;
 use eLife\Recommendations\Rule\BidirectionalRelationship;
 use eLife\Recommendations\RuleModel;
-use PHPUnit_Framework_TestCase;
 use Psr\Log\NullLogger;
 use test\eLife\ApiSdk\Serializer\ArticlePoANormalizerTest;
 use test\eLife\ApiSdk\Serializer\ArticleVoRNormalizerTest;
 
-class BidirectionalRelationshipTest extends PHPUnit_Framework_TestCase
+class BidirectionalRelationshipTest extends BaseRuleTest
 {
-    use ValidRelationAssertion;
-
     /**
      * @dataProvider getArticleData
      */
