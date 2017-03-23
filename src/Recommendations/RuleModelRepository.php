@@ -12,11 +12,11 @@ class RuleModelRepository
 {
     private $db;
 
-    public function __construct(Connection $conn, array $config)
+    public function __construct(Connection $conn, string $rulesTableName, string $referencesTableName)
     {
         $this->db = $conn;
-        $this->ruleTableName = $this->db->quoteIdentifier($config['rules'] || 'Rules');
-        $this->referencesTableName = $this->db->quoteIdentifier($config['references'] || 'References');
+        $this->ruleTableName = $this->db->quoteIdentifier($rulesTableName);
+        $this->referencesTableName = $this->db->quoteIdentifier($referencesTableName);
     }
 
     public function mapAll(array $items)
@@ -46,7 +46,7 @@ class RuleModelRepository
           OR Ru.type ="short-report"
           OR Ru.type ="tools-resources"
           OR Ru.type ="replication-study" 
-          ORDER BY Rules.published DESC
+          ORDER BY Ru.published DESC
           LIMIT 40
         ');
         $prepared->execute();
@@ -82,7 +82,7 @@ class RuleModelRepository
           SELECT Ru.rule_id, Ru.id, Ru.type, Ru.published, Ru.isSynthetic 
           FROM '.$this->ruleTableName.' as Ru
           WHERE Ru.type != \'subject\'
-          ORDER BY R.published
+          ORDER BY R.published DESC
           LIMIT ? 
           OFFSET ?;
         ');
@@ -102,7 +102,7 @@ class RuleModelRepository
           LEFT JOIN  '.$this->referencesTableName.' AS Re ON Ru.rule_id = Re.subject_id
           WHERE Re.on_id = ?
           AND Ru.type != "subject"
-          ORDER BY Ru.published;
+          ORDER BY Ru.published DESC;
         ');
         $prepared->bindValue(1, $model['rule_id']);
         $prepared->execute();
@@ -157,7 +157,13 @@ class RuleModelRepository
 
     public function hasRelation(ManyToManyRelationship $relationship)
     {
-        $prepared = $this->db->prepare('SELECT on_id, subject_id FROM '.$this->referencesTableName.' WHERE on_id = ? AND subject_id = ? LIMIT 1;');
+        $prepared = $this->db->prepare('
+              SELECT on_id, subject_id 
+              FROM '.$this->referencesTableName.' 
+              WHERE on_id = ? 
+              AND subject_id = ? 
+              LIMIT 1;
+        ');
         $prepared->bindValue(1, $relationship->getOn()->getRuleId());
         $prepared->bindValue(2, $relationship->getSubject()->getRuleId());
         $prepared->execute();

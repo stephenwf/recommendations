@@ -19,16 +19,22 @@ class GenerateDatabaseCommand extends Command
     private $logger;
     private $monitoring;
     private $schema;
+    private $rulesTableName;
+    private $referencesTableName;
 
     public function __construct(
         Connection $db,
         LoggerInterface $logger,
-        Monitoring $monitoring
+        Monitoring $monitoring,
+        string $rulesTableName,
+        string $referencesTableName
     ) {
         $this->db = $db;
         $this->logger = $logger;
         $this->monitoring = $monitoring;
         $this->schema = $db->getSchemaManager();
+        $this->rulesTableName = $rulesTableName;
+        $this->referencesTableName = $referencesTableName;
 
         parent::__construct(null);
     }
@@ -48,7 +54,7 @@ class GenerateDatabaseCommand extends Command
 
     private function createTables(bool $drop, Table ...$tables)
     {
-        foreach ($tables as $table) {
+        foreach (array_reverse($tables) as $table) {
             if ($drop) {
                 $this->db->getSchemaManager()->dropTable($table->getName());
             }
@@ -77,14 +83,14 @@ class GenerateDatabaseCommand extends Command
 
         if (
             $drop === false &&
-            $this->allTablesExist('Rules', 'References')
+            $this->allTablesExist($this->rulesTableName, $this->referencesTableName)
         ) {
             $this->logger->info('Database already exists, skipping.');
 
             return;
         }
 
-        $rules = $schema->createTable('Rules');
+        $rules = $schema->createTable($this->rulesTableName);
         $rules->addColumn('rule_id', 'guid');
         $rules->addColumn('id', 'string', ['length' => 64]);
         $rules->addColumn('type', 'string', ['length' => 64]);
@@ -92,7 +98,7 @@ class GenerateDatabaseCommand extends Command
         $rules->addColumn('isSynthetic', 'boolean', ['default' => false]);
         $rules->setPrimaryKey(['rule_id']);
 
-        $references = $schema->createTable('References');
+        $references = $schema->createTable($this->referencesTableName);
         $references->addColumn('on_id', 'guid');
         $references->addColumn('subject_id', 'guid');
         $references->setPrimaryKey(['on_id', 'subject_id']);
@@ -105,7 +111,7 @@ class GenerateDatabaseCommand extends Command
                 $this->db->query(sprintf('SET FOREIGN_KEY_CHECKS=%s', (int) false));
             }
             // Only need to create references since its cascades.
-            $this->createTables($drop, $rules);
+            $this->createTables($drop, $rules, $references);
             if ($drop) {
                 // Re-enable foreign key checks.
                 $this->db->query(sprintf('SET FOREIGN_KEY_CHECKS=%s', (int) true));
@@ -117,6 +123,8 @@ class GenerateDatabaseCommand extends Command
         } finally {
             $this->monitoring->endTransaction();
         }
-        $this->logger->info('Database created successfully.');
+        $this->logger->info('Database created successfully.', [
+            'tables' => [$this->referencesTableName, $this->rulesTableName],
+        ]);
     }
 }
