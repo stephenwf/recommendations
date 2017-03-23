@@ -101,6 +101,7 @@ final class Rules
         $next = [];
         foreach ($this->rules as $rule) {
             $prev = $next;
+            $this->logger->debug('Processing rule: ', ['class' => get_class($rule)]);
             $next = $rule->addRelations($model, $prev);
         }
 

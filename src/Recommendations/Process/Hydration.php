@@ -20,7 +20,7 @@ use eLife\ApiSdk\Model\PodcastEpisodeChapterModel;
 use eLife\Bus\Queue\SingleItemRepository;
 use eLife\Recommendations\RuleModel;
 
-final class Hydration
+class Hydration
 {
     private $cache = [];
     private $repo;

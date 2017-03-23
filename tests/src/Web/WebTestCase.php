@@ -2,8 +2,16 @@
 
 namespace tests\eLife\Web;
 
+use Doctrine\DBAL\Connection;
+use eLife\ApiSdk\Model\ArticlePoA;
+use eLife\ApiSdk\Model\Model;
 use eLife\App\Console;
 use eLife\App\Kernel;
+use eLife\Bus\Queue\SingleItemRepository;
+use eLife\Recommendations\Process\Hydration;
+use eLife\Recommendations\Relationships\ManyToManyRelationship;
+use eLife\Recommendations\RuleModel;
+use eLife\Recommendations\RuleModelRepository;
 use Psr\Log\NullLogger;
 use Silex\WebTestCase as SilexWebTestCase;
 use Symfony\Component\BrowserKit\Client;
@@ -12,6 +20,7 @@ use Symfony\Component\Console\Input\StringInput;
 use Symfony\Component\Console\Output\StreamOutput;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use test\eLife\ApiSdk\Builder;
 
 abstract class WebTestCase extends SilexWebTestCase
 {
@@ -21,6 +30,35 @@ abstract class WebTestCase extends SilexWebTestCase
     protected $kernel;
     /** @var Client */
     protected $api;
+    private $itemMocks = [];
+    private $transformer;
+
+    public function addArticlePoAWithId($id, $date = null)
+    {
+        $builder = Builder::for(ArticlePoA::class);
+        /** @var ArticlePoA $PoaArticle */
+        $PoaArticle = $builder->create(ArticlePoA::class)
+            ->withId($id);
+        if ($date) {
+            $PoaArticle = $PoaArticle->withPublished($date);
+        }
+        $PoaArticle = $PoaArticle->__invoke();
+
+        $this->addDocument('article', $id, $PoaArticle);
+
+        return new RuleModel($id, 'research-article', $PoaArticle->getPublishedDate());
+    }
+
+    public function addDocument(string $type, string $id, Model $content)
+    {
+        $this->itemMocks[$type] = $this->itemMocks[$type] ? $this->itemMocks[$type] : [];
+        $this->itemMocks[$type][$id] = $content;
+    }
+
+    public function addRelation(ManyToManyRelationship $ruleModel)
+    {
+        $this->getRulesRepo()->addRelation($ruleModel);
+    }
 
     public function getJsonResponse()
     {
@@ -54,9 +92,20 @@ abstract class WebTestCase extends SilexWebTestCase
             $config = include __DIR__.'/../../../config/ci.php';
         }
 
-        $config['elastic_index'] = 'elife_test';
+        $config['tables']['rules'] = 'Rules__test';
+        $config['tables']['references'] = 'References__test';
 
         return $this->modifyConfiguration($config);
+    }
+
+    public function getDatabase(): Connection
+    {
+        return $this->kernel->getApp()['db'];
+    }
+
+    public function getRulesRepo(): RuleModelRepository
+    {
+        return $this->kernel->getApp()['rules.repository'];
     }
 
     public function modifyConfiguration($config)
@@ -97,7 +146,7 @@ abstract class WebTestCase extends SilexWebTestCase
      */
     public function createApplication()
     {
-        $this->kernel = new Kernel($this->createConfiguration());
+        $this->kernel = new Kernel($this->createConfiguration(), false);
 
         return $this->kernel->getApp();
     }
@@ -106,13 +155,16 @@ abstract class WebTestCase extends SilexWebTestCase
     {
         parent::setUp();
         $lines = $this->runCommand('generate:database');
-        var_dump($lines);
-//        $this->assertStringStartsWith('Created new index', $lines[0], 'Failed to run test during set up');
+//        $this->assertStringStartsWith('Database created successfully.', $lines[0], 'Failed to run test during set up');
     }
 
     public function tearDown()
     {
-        // Delete database somehow.
+        $this->getDatabase()->query(sprintf('SET FOREIGN_KEY_CHECKS=%s', (int) false));
+        // Delete database.
+        $this->getDatabase()->getSchemaManager()->dropTable('References__test');
+        $this->getDatabase()->getSchemaManager()->dropTable('Rules__test');
+        $this->getDatabase()->query(sprintf('SET FOREIGN_KEY_CHECKS=%s', (int) true));
         parent::tearDown();
     }
 
@@ -124,6 +176,18 @@ abstract class WebTestCase extends SilexWebTestCase
         $logs = [];
         $logger = $this->createMock(NullLogger::class);
 
+        $transformerCallback = $this->returnCallback(function ($type, $id) {
+            return $this->itemMocks[$type][$id] ?? null;
+        });
+        $transformer = $this->createMock(SingleItemRepository::class);
+
+        $transformer
+            ->expects($this->any())
+            ->method('get')
+            ->will($transformerCallback);
+
+        $this->transformer = $transformer;
+
         foreach (['debug', 'info', 'warning', 'critical', 'emergency', 'alert', 'log', 'notice', 'error'] as $level) {
             $logger
                 ->expects($this->any())
@@ -132,13 +196,21 @@ abstract class WebTestCase extends SilexWebTestCase
         }
 
         $app = new Application();
-        $this->kernel->withApp(function ($app) use ($logger) {
-            // Bug with silex?
-            unset($app['logger']);
-            $app['logger'] = function () use ($logger) {
-                return $logger;
+        $this->kernel->withApp(function ($app) use ($logger, $transformer) {
+//            unset($app['logger']);
+//            $app['logger'] = function () use ($logger) {
+//                return $logger;
+//            };
+//            unset($app['hydration']);
+//            $app['hydration'] = function() {
+//                return $this->hydrator;
+//            };
+            unset($app['hydration.single_item_repository']);
+            $app['hydration.single_item_repository'] = function () use ($transformer) {
+                return $transformer;
             };
         });
+        $this->kernel->setupFlow();
         $app->setAutoExit(false);
         $application = new Console($app, $this->kernel);
         $application->logger = $logger;
