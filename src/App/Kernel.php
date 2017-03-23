@@ -105,7 +105,7 @@ final class Kernel implements MinimalKernel
             'file_logs_path' => self::ROOT.'/var/logs',
             'tables' => [
                 'rules' => 'Rules',
-                'references' => 'References',
+                'references' => 'Relations',
             ],
             'db' => array_merge([
                 'driver' => 'pdo_mysql',

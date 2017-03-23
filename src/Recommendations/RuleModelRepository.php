@@ -15,8 +15,8 @@ class RuleModelRepository
     public function __construct(Connection $conn, string $rulesTableName, string $referencesTableName)
     {
         $this->db = $conn;
-        $this->ruleTableName = "`$rulesTableName`";
-        $this->referencesTableName = "`$referencesTableName`";
+        $this->ruleTableName = $rulesTableName;
+        $this->referencesTableName = $referencesTableName;
     }
 
     public function mapAll(array $items)
@@ -40,12 +40,14 @@ class RuleModelRepository
         // Research Advance, Research Article, Research Exchange, Short Report, Tools and Resources or Replication Study article
         $prepared = $this->db->prepare('
           SELECT * FROM '.$this->ruleTableName.' as Ru 
-          WHERE Ru.type ="research-advance"
-          OR Ru.type ="research-article"
-          OR Ru.type ="research-exchange"
-          OR Ru.type ="short-report"
-          OR Ru.type ="tools-resources"
-          OR Ru.type ="replication-study" 
+          WHERE Ru.type IN (
+            "research-advance",
+            "research-article",
+            "research-exchange",
+            "short-report",
+            "tools-resources",
+            "replication-study"
+          )
           ORDER BY Ru.published DESC
           LIMIT 40
         ');

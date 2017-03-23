@@ -33,8 +33,8 @@ class GenerateDatabaseCommand extends Command
         $this->logger = $logger;
         $this->monitoring = $monitoring;
         $this->schema = $db->getSchemaManager();
-        $this->rulesTableName = "`$rulesTableName`";
-        $this->referencesTableName = "`$referencesTableName`";
+        $this->rulesTableName = $rulesTableName;
+        $this->referencesTableName = $referencesTableName;
 
         parent::__construct(null);
     }
