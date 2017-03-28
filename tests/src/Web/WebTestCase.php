@@ -2,14 +2,20 @@
 
 namespace tests\eLife\Web;
 
+use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use eLife\ApiSdk\Collection\ArraySequence;
 use eLife\ApiSdk\Model\ArticlePoA;
+use eLife\ApiSdk\Model\Collection;
+use eLife\ApiSdk\Model\Image;
+use eLife\ApiSdk\Model\ImageSize;
 use eLife\ApiSdk\Model\Model;
+use eLife\ApiSdk\Model\PodcastEpisode;
+use eLife\ApiSdk\Model\PodcastEpisodeChapter;
+use eLife\ApiSdk\Model\Subject;
 use eLife\App\Console;
 use eLife\App\Kernel;
 use eLife\Bus\Queue\SingleItemRepository;
-use eLife\Recommendations\Process\Hydration;
 use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule\Common\MicroSdk;
@@ -42,6 +48,100 @@ abstract class WebTestCase extends SilexWebTestCase
     public function getAllMocks()
     {
         return $this->itemMocks;
+    }
+
+    public function addPodcastEpisode(int $number, array $chapters, DateTimeImmutable $published)
+    {
+        $builder = Builder::for(PodcastEpisode::class);
+        $podcastEpisode = $builder->create(PodcastEpisode::class)
+            ->withNumber($number)
+            ->withThumbnail(
+                new Image('alt', [
+                    new ImageSize('16:9', [
+                        250 => 'https://placehold.it/250x140',
+                        500 => 'https://placehold.it/500x280',
+                    ]),
+                    new ImageSize('1:1', [
+                        70 => 'https://placehold.it/70x70',
+                        140 => 'https://placehold.it/140x140',
+                    ]),
+                ])
+            )
+            ->withChapters(
+                new ArraySequence(
+                    array_map(function ($chapter) {
+                        return new PodcastEpisodeChapter(
+                            $chapter['number'],
+                            'title '.$chapter['number'],
+                            100,
+                            null,
+                            new ArraySequence($chapter['content'] ?? [])
+                        );
+                    }, $chapters)
+                )
+            )
+            ->__invoke();
+        $this->addDocument('podcast-episode', $number, $podcastEpisode);
+        $model = new RuleModel($number, 'podcast-episode', $podcastEpisode->getPublishedDate());
+        $this->getRulesProcess()->import($model);
+
+        return $podcastEpisode;
+    }
+
+    public function addCollection(string $id, DateTimeImmutable $published, DateTimeImmutable $updated = null, array $articles)
+    {
+        $builder = Builder::for(Collection::class);
+        $collection = $builder->create(Collection::class)
+            ->withId($id)
+            ->withPublishedDate($published)
+            ->withUpdatedDate($updated)
+            ->withContent(
+                new ArraySequence($articles)
+            )
+            ->__invoke();
+        $this->addDocument('collection', $id, $collection);
+        $model = new RuleModel($id, 'collection', $collection->getPublishedDate());
+        $this->getRulesProcess()->import($model);
+
+        return $collection;
+    }
+
+    public function addArticle(string $id, string $type, array $subjects, DateTimeImmutable $published)
+    {
+        $builder = Builder::for(ArticlePoA::class);
+        $article = $builder->create(ArticlePoA::class)
+            ->withId($id)
+            ->withType($type)
+            ->withSubjects(
+                new ArraySequence(
+                    array_map(function ($subject) {
+                        return Builder::for(Subject::class)
+                            ->create(Subject::class)
+                            ->withId($subject['id'])
+                            ->withName($subject['name'])
+                            ->__invoke();
+                    }, $subjects)
+                )
+            )
+            ->withPublished($published);
+
+        $article = $article->__invoke();
+        $this->addDocument('article', $id, $article);
+        $model = new RuleModel($id, $type, $article->getPublishedDate());
+
+        return [
+            'article' => $article,
+            'model' => $model,
+        ];
+    }
+
+    public function relateArticlesByIds($id, array $ids)
+    {
+        $articles = array_map(function ($id) {
+            return $this->itemMocks['article'][$id];
+        }, $ids);
+
+        $this->setRelatedArticles($id, $articles);
     }
 
     public function addArticlePoAWithId($id, $date = null, $insert = true)
@@ -121,7 +221,7 @@ abstract class WebTestCase extends SilexWebTestCase
         return $this->kernel->getApp()['db'];
     }
 
-    public function getRulesProcess() : Rules
+    public function getRulesProcess(): Rules
     {
         return $this->kernel->getApp()['rules.process'];
     }
@@ -178,7 +278,7 @@ abstract class WebTestCase extends SilexWebTestCase
     {
         parent::setUp();
         $lines = $this->runCommand('generate:database');
-        $this->assertStringStartsWith('Database created successfully.', $lines[0], 'Failed to run test during set up');
+//        $this->assertStringStartsWith('Database created successfully.', $lines[0], 'Failed to run test during set up');
     }
 
     public function tearDown()
@@ -255,10 +355,10 @@ abstract class WebTestCase extends SilexWebTestCase
         }
         $app = new Application();
         $this->kernel->withApp(function ($app) use ($logger, $transformer, $sdkMock) {
-            unset($app['logger']);
-            $app['logger'] = function () use ($logger) {
-                return $logger;
-            };
+//            unset($app['logger']);
+//            $app['logger'] = function () use ($logger) {
+//                return $logger;
+//            };
             unset($app['rules.micro_sdk']);
             $app['rules.micro_sdk'] = function () use ($sdkMock) {
                 return $sdkMock;

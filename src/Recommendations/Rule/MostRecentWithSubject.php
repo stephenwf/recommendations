@@ -73,14 +73,19 @@ class MostRecentWithSubject implements Rule
 
     public function get(RuleModel $input)
     {
-        return $this->sdk->get($input->getType(), $input->getId());
+        return $this->sdk->get($this->getType($input->getType()), $input->getId());
     }
 
     public function resolveRelations(RuleModel $input): array
     {
         /** @var HasSubjects $model Added to stop IDE complaining. */
         $model = $this->get($input);
+
         if (!$model instanceof HasSubjects) {
+            $this->logger->debug($input->getType().'<'.$input->getId().'> has no subjects', [
+                'model' => $model,
+            ]);
+
             return [];
         }
 

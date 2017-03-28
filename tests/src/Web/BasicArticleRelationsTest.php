@@ -10,7 +10,7 @@ use eLife\Recommendations\Relationships\ManyToManyRelationship;
  *
  * @group web
  */
-class TestingTest extends WebTestCase
+class BasicArticleRelationsTest extends WebTestCase
 {
     public function testAddingRule()
     {

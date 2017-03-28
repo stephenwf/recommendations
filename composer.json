@@ -27,7 +27,8 @@
         "elife/logging-sdk": "dev-master",
         "ocramius/package-versions": "^1.1",
         "justinrainbow/json-schema": "^5.1",
-        "mindplay/composer-locator": "^2.1"
+        "mindplay/composer-locator": "^2.1",
+        "behat/gherkin": "^4.4"
     },
     "autoload": {
         "psr-4": {

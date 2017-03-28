@@ -44,7 +44,7 @@ class PodcastEpisodeContents implements Rule
                 // Only article for now in this rule.
                 return $content instanceof Article;
             })->map(function (ArticleVersion $article) use ($input, $chapter) {
-                $type = $article instanceof ExternalArticle ? 'external-article' : 'research-article';
+                $type = $article instanceof ExternalArticle ? 'external-article' : $article->getType();
                 $date = $article instanceof ArticleVersion ? $article->getPublishedDate() : null;
                 // Link this podcast TO the related item.
                 return new ManyToManyRelationship(

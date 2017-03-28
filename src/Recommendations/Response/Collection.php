@@ -48,7 +48,7 @@ final class Collection implements Snippet, Result
     private function __construct(
         string $id,
         string $title,
-        string $impactStatement,
+        string $impactStatement = null,
         DateTimeImmutable $updated = null,
         DateTimeImmutable $published,
         ImageResponse $image,

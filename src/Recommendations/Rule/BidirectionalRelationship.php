@@ -84,7 +84,7 @@ class BidirectionalRelationship implements Rule
                 return $item instanceof Article;
             })
             ->map(function (Article $article) use ($input) {
-                $type = $article instanceof ExternalArticleModel ? 'external-article' : 'research-article';
+                $type = $article instanceof ExternalArticleModel ? 'external-article' : $article->getType();
                 $date = $article instanceof ArticleVersion ? $article->getPublishedDate() : null;
                 // Link this podcast TO the related item.
                 $this->logger->debug('Mapping to relation '.$input->getId());
