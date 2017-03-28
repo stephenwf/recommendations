@@ -3,6 +3,7 @@
 namespace eLife\Recommendations\Command;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception\TableNotFoundException;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Schema\Table;
 use eLife\Logging\Monitoring;
@@ -56,7 +57,11 @@ class GenerateDatabaseCommand extends Command
     {
         foreach (array_reverse($tables) as $table) {
             if ($drop) {
-                $this->db->getSchemaManager()->dropTable($table->getName());
+                try {
+                    $this->db->getSchemaManager()->dropTable($table->getName());
+                } catch (TableNotFoundException $e) {
+                    $this->logger->debug('Table does not exist, skipping drop', ['table' => $table->getName()]);
+                }
             }
         }
         foreach ($tables as $table) {
