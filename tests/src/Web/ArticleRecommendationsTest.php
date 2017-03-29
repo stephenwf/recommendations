@@ -131,7 +131,6 @@ class ArticleRecommendationsTest extends WebTestCase
 
 //        $this->assertEquals('003', $json->items[0]->id);
 //        $this->assertEquals('research-article', $json->items[0]->type);
-//
 //        $this->assertEquals('004', $json->items[1]->id);
 //        $this->assertEquals('insight', $json->items[1]->type);
 

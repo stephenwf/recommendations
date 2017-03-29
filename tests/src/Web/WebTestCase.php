@@ -355,10 +355,6 @@ abstract class WebTestCase extends SilexWebTestCase
         }
         $app = new Application();
         $this->kernel->withApp(function ($app) use ($logger, $transformer, $sdkMock) {
-//            unset($app['logger']);
-//            $app['logger'] = function () use ($logger) {
-//                return $logger;
-//            };
             unset($app['rules.micro_sdk']);
             $app['rules.micro_sdk'] = function () use ($sdkMock) {
                 return $sdkMock;
