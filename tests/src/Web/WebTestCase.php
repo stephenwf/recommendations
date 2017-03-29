@@ -167,7 +167,6 @@ abstract class WebTestCase extends SilexWebTestCase
 
     public function addDocument(string $type, string $id, Model $content)
     {
-        $this->itemMocks[$type] = $this->itemMocks[$type] ? $this->itemMocks[$type] : [];
         $this->itemMocks[$type][$id] = $content;
     }
 
@@ -355,10 +354,6 @@ abstract class WebTestCase extends SilexWebTestCase
         }
         $app = new Application();
         $this->kernel->withApp(function ($app) use ($logger, $transformer, $sdkMock) {
-//            unset($app['logger']);
-//            $app['logger'] = function () use ($logger) {
-//                return $logger;
-//            };
             unset($app['rules.micro_sdk']);
             $app['rules.micro_sdk'] = function () use ($sdkMock) {
                 return $sdkMock;
