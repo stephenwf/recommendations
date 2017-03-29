@@ -430,7 +430,7 @@ final class Kernel implements MinimalKernel
             return new JsonResponse(array_filter([
                 'error' => $e->getMessage(),
                 'trace' => $this->app['config']['debug'] ? $e->getTraceAsString() : null,
-            ]), $e->getCode() ? $e->getCode() : 500);
+            ]), $e->getCode() ? $e->getCode() : Response::HTTP_INTERNAL_SERVER_ERROR);
         }
         $logger->error('An unknown exception was thrown', [
             'exception' => $e,
@@ -447,7 +447,7 @@ final class Kernel implements MinimalKernel
                 'time' => microtime(true) - $this->startTime,
             ] : [
                 'error' => trim($errorMessage),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function withApp(callable $fn)
