@@ -6,6 +6,7 @@ use eLife\ApiClient\MediaType;
 use eLife\Recommendations\Process\Hydration;
 use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\RecommendationsResponse;
+use eLife\Recommendations\Response\PrivateResponse;
 use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
 use JMS\Serializer\SerializationContext;
@@ -111,11 +112,10 @@ final class DefaultController
 
     public function pingAction()
     {
-        return new Response(
+        return new PrivateResponse(
             'pong',
             200,
             [
-                'Cache-Control' => 'must-revalidate, no-cache, no-store, private',
                 'Content-Type' => 'text/plain; charset=UTF-8',
             ]
         );

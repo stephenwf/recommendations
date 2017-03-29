@@ -31,6 +31,7 @@ use eLife\Recommendations\Command\PopulateRulesCommand;
 use eLife\Recommendations\Process\Hydration;
 use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\RecommendationResultDiscriminator;
+use eLife\Recommendations\Response\PrivateResponse;
 use eLife\Recommendations\Rule\BidirectionalRelationship;
 use eLife\Recommendations\Rule\CollectionContents;
 use eLife\Recommendations\Rule\Common\MicroSdk;
@@ -495,6 +496,9 @@ final class Kernel implements MinimalKernel
 
     public function cache(Request $request, Response $response)
     {
+        if ($response instanceof PrivateResponse) {
+            return $response;
+        }
         $response->setMaxAge($this->app['config']['ttl']);
         $response->headers->addCacheControlDirective('stale-while-revalidate', $this->app['config']['ttl']);
         $response->headers->addCacheControlDirective('stale-if-error', 86400);

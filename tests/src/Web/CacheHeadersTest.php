@@ -5,7 +5,7 @@ namespace tests\eLife\Web;
 use DateTimeImmutable;
 
 /**
- * @group web
+ * @group we
  */
 class CacheHeadersTest extends WebTestCase
 {
@@ -41,8 +41,8 @@ class CacheHeadersTest extends WebTestCase
         $this->jsonRequest('GET', '/ping');
         $response = $this->getResponse();
         $this->assertEquals(200, $response->getStatusCode());
-        $this->assertEquals('max-age=300, must-revalidate, no-cache, no-store, public, stale-if-error=86400, stale-while-revalidate=300', $response->headers->get('Cache-Control'));
-        $this->assertEquals('Accept', $response->headers->get('Vary'));
+        $this->assertEquals('text/plain; charset=UTF-8', $response->headers->get('Content-Type'));
+        $this->assertEquals('must-revalidate, no-cache, no-store, private', $response->headers->get('Cache-Control'));
     }
 
     public function modifyConfiguration($config)
