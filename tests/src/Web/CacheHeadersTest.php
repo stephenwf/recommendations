@@ -35,6 +35,16 @@ class CacheHeadersTest extends WebTestCase
         $this->assertEquals('Accept', $response->headers->get('Vary'));
     }
 
+    public function testPing()
+    {
+        $this->newClient();
+        $this->jsonRequest('GET', '/ping');
+        $response = $this->getResponse();
+        $this->assertEquals(200, $response->getStatusCode());
+        $this->assertEquals('max-age=300, must-revalidate, no-cache, no-store, public, stale-if-error=86400, stale-while-revalidate=300', $response->headers->get('Cache-Control'));
+        $this->assertEquals('Accept', $response->headers->get('Vary'));
+    }
+
     public function modifyConfiguration($config)
     {
         $config['ttl'] = 300;
