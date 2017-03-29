@@ -5,7 +5,7 @@ namespace tests\eLife\Web;
 use DateTimeImmutable;
 
 /**
- * @group we
+ * @group web
  */
 class CacheHeadersTest extends WebTestCase
 {
