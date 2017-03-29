@@ -11,22 +11,22 @@
 namespace eLife\Recommendations\Process;
 
 use Assert\Assertion;
-use eLife\ApiSdk\ApiSdk;
 use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\ApiSdk\Model\HasSubjects;
 use eLife\ApiSdk\Model\PodcastEpisode;
 use eLife\ApiSdk\Model\PodcastEpisodeChapter;
 use eLife\ApiSdk\Model\PodcastEpisodeChapterModel;
 use eLife\Bus\Queue\SingleItemRepository;
+use eLife\Recommendations\Rule\Common\MicroSdk;
 use eLife\Recommendations\RuleModel;
 
-final class Hydration
+class Hydration
 {
     private $cache = [];
     private $repo;
     private $sdk;
 
-    public function __construct(ApiSdk $sdk, SingleItemRepository $repo)
+    public function __construct(MicroSdk $sdk, SingleItemRepository $repo)
     {
         $this->repo = $repo;
         $this->sdk = $sdk;
@@ -99,7 +99,8 @@ final class Hydration
         if ($model instanceof ArticleVersion) {
             $this->cache['related-article'] = $this->cache['related-article'] ?? [];
             /** @var $model ArticleVersion */
-            foreach ($this->sdk->articles()->getRelatedArticles($model->getId()) as $relatedArticle) {
+            foreach ($this->sdk->getRelatedArticles($model->getId()) as $relatedArticle) {
+                /* @var $relatedArticle ArticleVersion */
                 $this->cache[$relatedArticle->getType()][$relatedArticle->getId()] = $relatedArticle;
             }
         }

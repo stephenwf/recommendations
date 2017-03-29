@@ -3,14 +3,24 @@
 namespace eLife\Recommendations\Rule\Common;
 
 use eLife\ApiSdk\ApiSdk;
-use JMS\Serializer\Exception\LogicException;
+use eLife\Bus\Queue\SingleItemRepository;
+use LogicException;
 
-trait GetSdk
+class MicroSdk implements SingleItemRepository
 {
-    /** @var ApiSdk */
     private $sdk;
 
-    public function getFromSdk(string $type, string $id)
+    public function __construct(ApiSdk $sdk)
+    {
+        $this->sdk = $sdk;
+    }
+
+    public function getRelatedArticles($id)
+    {
+        return $this->sdk->articles()->getRelatedArticles($id);
+    }
+
+    public function get(string $type, string $id)
     {
         if (!isset($this->sdk) || !$this->sdk instanceof ApiSdk) {
             throw new LogicException('ApiSDK field does not exist on this class: '.get_class($this));

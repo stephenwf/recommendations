@@ -2,13 +2,13 @@
 
 namespace eLife\Recommendations\Rule;
 
-use eLife\ApiSdk\ApiSdk;
 use eLife\ApiSdk\Model\Article;
 use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\ApiSdk\Model\Collection;
 use eLife\ApiSdk\Model\ExternalArticle;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule;
+use eLife\Recommendations\Rule\Common\MicroSdk;
 use eLife\Recommendations\Rule\Common\PersistRule;
 use eLife\Recommendations\Rule\Common\RepoRelations;
 use eLife\Recommendations\RuleModel;
@@ -22,7 +22,7 @@ final class CollectionContents implements Rule
     private $sdk;
     private $repo;
 
-    public function __construct(ApiSdk $sdk, RuleModelRepository $repo)
+    public function __construct(MicroSdk $sdk, RuleModelRepository $repo)
     {
         $this->sdk = $sdk;
         $this->repo = $repo;
@@ -30,7 +30,7 @@ final class CollectionContents implements Rule
 
     public function getCollection(string $id)
     {
-        return $this->sdk->collections()->get($id)->wait(true);
+        return $this->sdk->get('collection', $id);
     }
 
     public function resolveRelations(RuleModel $input): array

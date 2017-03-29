@@ -2,13 +2,13 @@
 
 namespace eLife\Recommendations\Rule;
 
-use eLife\ApiSdk\ApiSdk;
 use eLife\ApiSdk\Collection\Sequence;
 use eLife\ApiSdk\Model\Article;
 use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\ApiSdk\Model\ExternalArticle as ExternalArticleModel;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule;
+use eLife\Recommendations\Rule\Common\MicroSdk;
 use eLife\Recommendations\Rule\Common\PersistRule;
 use eLife\Recommendations\Rule\Common\RepoRelations;
 use eLife\Recommendations\RuleModel;
@@ -26,7 +26,7 @@ class BidirectionalRelationship implements Rule
     private $logger;
 
     public function __construct(
-        ApiSdk $sdk,
+        MicroSdk $sdk,
         RuleModelRepository $repo,
         LoggerInterface $logger = null
     ) {
@@ -42,12 +42,12 @@ class BidirectionalRelationship implements Rule
 
     protected function getArticle(string $id): Article
     {
-        return $this->sdk->articles()->get($id)->wait(true);
+        return $this->sdk->get('article', $id);
     }
 
     protected function getRelatedArticles(string $id): Sequence
     {
-        return $this->sdk->articles()->getRelatedArticles($id);
+        return $this->sdk->getRelatedArticles($id);
     }
 
     /**
@@ -84,7 +84,7 @@ class BidirectionalRelationship implements Rule
                 return $item instanceof Article;
             })
             ->map(function (Article $article) use ($input) {
-                $type = $article instanceof ExternalArticleModel ? 'external-article' : 'research-article';
+                $type = $article instanceof ExternalArticleModel ? 'external-article' : $article->getType();
                 $date = $article instanceof ArticleVersion ? $article->getPublishedDate() : null;
                 // Link this podcast TO the related item.
                 $this->logger->debug('Mapping to relation '.$input->getId());

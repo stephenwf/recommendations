@@ -6,11 +6,10 @@ use eLife\ApiSdk\Model\ArticleVersion;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use eLife\Recommendations\Rule\MostRecentWithSubject;
 use eLife\Recommendations\RuleModel;
-use PHPUnit_Framework_TestCase;
 use test\eLife\ApiSdk\Serializer\ArticlePoANormalizerTest;
 use test\eLife\ApiSdk\Serializer\ArticleVoRNormalizerTest;
 
-class MostRecentWithSubjectTest extends PHPUnit_Framework_TestCase
+class MostRecentWithSubjectTest extends BaseRuleTest
 {
     /**
      * @dataProvider getArticleData
@@ -18,9 +17,9 @@ class MostRecentWithSubjectTest extends PHPUnit_Framework_TestCase
     public function test(ArticleVersion $article)
     {
         /** @var MostRecentWithSubject | \PHPUnit_Framework_MockObject_MockObject $mock */
-        $mock = $this->createPartialMock(MostRecentWithSubject::class, ['getFromSdk']);
+        $mock = $this->createPartialMock(MostRecentWithSubject::class, ['get']);
         $mock->expects($this->exactly(1))
-            ->method('getFromSdk')
+            ->method('get')
             ->willReturn($article);
 
         $this->assertTrue(in_array($article->getType(), $mock->supports()));

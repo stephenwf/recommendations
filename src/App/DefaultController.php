@@ -35,9 +35,13 @@ final class DefaultController
         $this->rules = $rules;
         $this->hydrator = $hydrator;
         $this->serializer = $serializer;
-        $this->context = new SerializationContext();
         $this->repo = $repo;
         $this->logger = $logger;
+    }
+
+    public function createContext()
+    {
+        return new SerializationContext();
     }
 
     public function acceptableRequest(Request $request)
@@ -78,8 +82,9 @@ final class DefaultController
         $version = $mediaType->getVersion() || self::CURRENT_VERSION;
         $recommendations = $this->repo->slice($offset, $perPage);
         $items = $this->hydrator->hydrateAll($recommendations);
-        $this->context->setVersion($version);
-        $json = $this->serializer->serialize(RecommendationsResponse::fromModels($items, count($items)), 'json', $this->context);
+        $context = $this->createContext();
+        $context->setVersion($version);
+        $json = $this->serializer->serialize(RecommendationsResponse::fromModels($items, count($items)), 'json', $context);
 
         return new Response($json, 200, [
             'Content-Type' => (string) (new MediaType(self::MEDIA_TYPE, $version)),
@@ -95,8 +100,9 @@ final class DefaultController
         //$this->hydrator->extractRelatedFrom($requestModel);
         $recommendations = $this->rules->getRecommendations($requestModel);
         $items = $this->hydrator->hydrateAll($recommendations);
-        $this->context->setVersion($version);
-        $json = $this->serializer->serialize(RecommendationsResponse::fromModels($items, count($items)), 'json', $this->context);
+        $context = $this->createContext();
+        $context->setVersion($version);
+        $json = $this->serializer->serialize(RecommendationsResponse::fromModels($items, count($items)), 'json', $context);
 
         return new Response($json, 200, [
             'Content-Type' => (string) (new MediaType(self::MEDIA_TYPE, $version)),

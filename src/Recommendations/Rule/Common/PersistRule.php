@@ -4,6 +4,7 @@ namespace eLife\Recommendations\Rule\Common;
 
 use eLife\Recommendations\Relationship;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
+use eLife\Recommendations\Relationships\NoRelationship;
 use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
 use LogicException;
@@ -19,6 +20,10 @@ trait PersistRule
         switch (true) {
             case $relationship instanceof ManyToManyRelationship:
                 $repo->addRelation($relationship);
+                break;
+
+            case $relationship instanceof NoRelationship:
+                $repo->upsert($relationship->getOn());
                 break;
 
             default:

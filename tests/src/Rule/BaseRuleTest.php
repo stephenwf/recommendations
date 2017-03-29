@@ -3,8 +3,9 @@
 namespace tests\eLife\Rule;
 
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
+use PHPUnit_Framework_TestCase;
 
-trait ValidRelationAssertion
+abstract class BaseRuleTest extends PHPUnit_Framework_TestCase
 {
     public function assertValidRelation(ManyToManyRelationship $relation)
     {
