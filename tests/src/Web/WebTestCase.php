@@ -167,7 +167,6 @@ abstract class WebTestCase extends SilexWebTestCase
 
     public function addDocument(string $type, string $id, Model $content)
     {
-        $this->itemMocks[$type] = $this->itemMocks[$type] ? $this->itemMocks[$type] : [];
         $this->itemMocks[$type][$id] = $content;
     }
 
