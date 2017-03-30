@@ -25,7 +25,7 @@ trait RuleModelLogger
         }
         $this->logger->log(
             $level,
-            sprintf('%s %s<%s> %s', __CLASS__, $ruleModel->getType(), $ruleModel->getId(), $message),
+            sprintf('%s %s<%s> %s', str_replace('eLife\Recommendations\\', '', __CLASS__), $ruleModel->getType(), $ruleModel->getId(), $message),
             $context
         );
     }

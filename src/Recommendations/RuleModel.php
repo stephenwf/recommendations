@@ -28,6 +28,11 @@ class RuleModel implements JsonSerializable
         $this->rule_id = $rule_id;
     }
 
+    public function setType(string $type)
+    {
+        $this->type = $type;
+    }
+
     public function setRuleId(string $id)
     {
         $this->rule_id = $id;
@@ -94,5 +99,10 @@ class RuleModel implements JsonSerializable
             'published' => $this->published,
             'isSynthetic' => $this->isSynthetic,
         ];
+    }
+
+    public function setPublished(DateTimeImmutable $published)
+    {
+        $this->published = $published;
     }
 }

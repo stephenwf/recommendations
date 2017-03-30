@@ -87,7 +87,7 @@ class ArticleRecommendationsTest extends WebTestCase
     public function test_for_an_article_that_has_a_subject_but_no_relations()
     {
         $this->newClient();
-        $this->jsonRequest('GET', '/recommendations/research-article/001');
+        $this->jsonRequest('GET', '/recommendations/article/001');
         $json = $this->getJsonResponse();
 
         $this->assertEquals(2, $json->total);
@@ -100,7 +100,7 @@ class ArticleRecommendationsTest extends WebTestCase
     public function test_for_an_article_that_has_neither_a_subject_nor_relations()
     {
         $this->newClient();
-        $this->jsonRequest('GET', '/recommendations/research-article/007');
+        $this->jsonRequest('GET', '/recommendations/article/007');
         $json = $this->getJsonResponse();
 
         $this->assertEquals(1, $json->total);
@@ -112,7 +112,7 @@ class ArticleRecommendationsTest extends WebTestCase
     public function test_for_a_research_article_the_has_been_corrected_and_has_an_insight()
     {
         $this->newClient();
-        $this->jsonRequest('GET', '/recommendations/research-article/002');
+        $this->jsonRequest('GET', '/recommendations/article/002');
         $json = $this->getJsonResponse();
 
         $this->assertEquals(4, $json->total);
@@ -145,7 +145,7 @@ class ArticleRecommendationsTest extends WebTestCase
     public function test_for_an_article_that_is_in_podcast_episodes_and_a_collection_and_has_a_relation()
     {
         $this->newClient();
-        $this->jsonRequest('GET', '/recommendations/research-article/006');
+        $this->jsonRequest('GET', '/recommendations/article/006');
         $json = $this->getJsonResponse();
 
         $this->assertEquals(4, $json->total);

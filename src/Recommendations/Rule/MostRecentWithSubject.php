@@ -76,7 +76,7 @@ class MostRecentWithSubject implements Rule
     {
         $type = $this->getType($input->getType());
         if ($type !== $input->getType()) {
-            $this->debug($input, sprintf('Converting type from % to %', $input->getType(), $type));
+            $this->debug($input, sprintf('Converting type from %s to %s', $input->getType(), $type));
         }
 
         return $this->sdk->get($type, $input->getId());

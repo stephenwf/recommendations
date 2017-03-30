@@ -7,7 +7,6 @@ use eLife\Recommendations\Process\Hydration;
 use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\RecommendationsResponse;
 use eLife\Recommendations\Response\PrivateResponse;
-use eLife\Recommendations\RuleModel;
 use eLife\Recommendations\RuleModelRepository;
 use JMS\Serializer\SerializationContext;
 use JMS\Serializer\Serializer;
@@ -94,9 +93,15 @@ final class DefaultController
 
     public function indexAction(Request $request, string $type, string $id)
     {
-        $requestModel = new RuleModel($id, $type);
+        if ($type !== 'article') {
+            $this->logger->warning('Invalid type given, defaulting to article');
+            $type = 'article';
+        }
         $mediaType = $this->acceptableRequest($request);
         $version = $mediaType->getVersion() || self::CURRENT_VERSION;
+
+        $this->logger->debug('Rule model', ['id' => $id, 'type' => $type]);
+        $requestModel = $this->repo->getOne($id, $type);
         // This is meant to be an optimisation, but due to lack of cache elsewhere it currently slows it down.
         //$this->hydrator->extractRelatedFrom($requestModel);
         $recommendations = $this->rules->getRecommendations($requestModel);

@@ -84,7 +84,7 @@ final class Rules
                     'relations' => $relations,
                 ]);
             } else {
-                $this->debug($model, 'No relations found, upserting');
+                $this->debug($model, 'No relations in rule found, upserting');
                 $relations = [new NoRelationship($model)];
             }
             if ($upsert) {

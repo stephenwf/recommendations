@@ -21,14 +21,14 @@ class BasicArticleRelationsTest extends WebTestCase
         $this->getRulesProcess()->import($article2);
 
         $this->newClient();
-        $this->jsonRequest('GET', '/recommendations/research-article/1');
+        $this->jsonRequest('GET', '/recommendations/article/1');
         $json = $this->getJsonResponse();
 
         $this->assertEquals(1, $json->total);
         $this->assertEquals('2', $json->items[0]->id);
 
         $this->newClient();
-        $this->jsonRequest('GET', '/recommendations/research-article/2');
+        $this->jsonRequest('GET', '/recommendations/article/2');
         $json = $this->getJsonResponse();
 
         $this->assertEquals(1, $json->total);
@@ -43,14 +43,14 @@ class BasicArticleRelationsTest extends WebTestCase
         $this->addRelation(new ManyToManyRelationship($article1, $article2));
 
         $this->newClient();
-        $this->jsonRequest('GET', '/recommendations/research-article/2');
+        $this->jsonRequest('GET', '/recommendations/article/2');
         $json = $this->getJsonResponse();
 
         $this->assertEquals(1, $json->total);
         $this->assertEquals('1', $json->items[0]->id);
 
         $this->newClient();
-        $this->jsonRequest('GET', '/recommendations/research-article/1');
+        $this->jsonRequest('GET', '/recommendations/article/1');
         $json = $this->getJsonResponse();
 
         $this->assertEquals(1, $json->total);
@@ -67,7 +67,7 @@ class BasicArticleRelationsTest extends WebTestCase
         $this->addRelation(new ManyToManyRelationship($article1, $article3));
 
         $this->newClient();
-        $this->jsonRequest('GET', '/recommendations/research-article/1');
+        $this->jsonRequest('GET', '/recommendations/article/1');
         $json = $this->getJsonResponse();
 
         $this->assertEquals(2, $json->total);
@@ -81,7 +81,7 @@ class BasicArticleRelationsTest extends WebTestCase
         $this->addArticlePoAWithId('2', (new DateTimeImmutable())->setDate(2017, 2, 2));
 
         $this->newClient();
-        $this->jsonRequest('GET', '/recommendations/research-article/1');
+        $this->jsonRequest('GET', '/recommendations/article/1');
         $json = $this->getJsonResponse();
 
         $this->assertEquals(1, $json->total);

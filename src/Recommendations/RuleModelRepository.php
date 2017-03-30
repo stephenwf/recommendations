@@ -7,6 +7,7 @@ use Doctrine\DBAL\Connection;
 use eLife\Recommendations\Relationships\ManyToManyRelationship;
 use PDO;
 use Rhumsaa\Uuid\Uuid;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class RuleModelRepository
 {
@@ -33,6 +34,16 @@ class RuleModelRepository
             $item['isSynthetic'],
             $item['rule_id']
         );
+    }
+
+    public function hydrateOne(RuleModel $ruleModel)
+    {
+        $item = $this->get($ruleModel);
+        $ruleModel->setType($item['type']);
+        $ruleModel->setRuleId($item['rule_id']);
+        $ruleModel->setPublished(new DateTimeImmutable($item['published']));
+
+        return $ruleModel;
     }
 
     public function getLatestArticle()
@@ -112,14 +123,54 @@ class RuleModelRepository
         return $this->mapAll($prepared->fetchAll());
     }
 
+    public function getOne(string $id, string $type)
+    {
+        return $this->map($this->get(new RuleModel($id, $type)));
+    }
+
     public function get(RuleModel $ruleModel)
     {
-        $prepared = $this->db->prepare('SELECT Ru.rule_id FROM '.$this->ruleTableName.' as Ru WHERE Ru.id = ? AND Ru.type = ? LIMIT 1;');
-        $prepared->bindValue(1, $ruleModel->getId());
-        $prepared->bindValue(2, $ruleModel->getType());
+        if ($ruleModel->getType() === 'article') {
+            $prepared = $this->db->prepare('
+              SELECT Ru.rule_id, Ru.type, Ru.id, Ru.published, Ru.isSynthetic
+              FROM '.$this->ruleTableName.' as Ru 
+              WHERE Ru.id = ? 
+              AND Ru.type IN (
+                "correction",
+                "editorial",
+                "feature",
+                "insight",
+                "research-advance",
+                "research-article",
+                "research-exchange",
+                "retraction",
+                "registered-report",
+                "replication-study",
+                "short-report",
+                "tools-resources"
+              )
+              LIMIT 1;
+            ');
+            $prepared->bindValue(1, $ruleModel->getId());
+        } else {
+            $prepared = $this->db->prepare('
+              SELECT Ru.rule_id, Ru.type, Ru.id, Ru.published, Ru.isSynthetic
+              FROM '.$this->ruleTableName.' as Ru 
+              WHERE Ru.id = ? 
+              AND Ru.type = ? 
+              LIMIT 1;
+            ');
+            $prepared->bindValue(1, $ruleModel->getId());
+            $prepared->bindValue(2, $ruleModel->getType());
+        }
         $prepared->execute();
 
-        return $prepared->fetch();
+        $result = $prepared->fetch();
+        if (!$result) {
+            throw new NotFoundHttpException('Rule model not found.');
+        }
+
+        return $result;
     }
 
     public function insert(RuleModel $ruleModel)
@@ -147,10 +198,9 @@ class RuleModelRepository
         if ($ruleModel->isFromDatabase()) {
             return $ruleModel;
         }
-        $dataModel = $this->get($ruleModel);
-        if ($dataModel) {
-            $ruleModel->setRuleId($dataModel['rule_id']);
-        } else {
+        try {
+            $this->hydrateOne($ruleModel);
+        } catch (NotFoundHttpException $e) {
             $this->insert($ruleModel);
         }
 
