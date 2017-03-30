@@ -18,6 +18,7 @@ final class CollectionContents implements Rule
 {
     use PersistRule;
     use RepoRelations;
+    use RuleModelLogger;
 
     private $sdk;
     private $repo;
@@ -28,6 +29,7 @@ final class CollectionContents implements Rule
         $this->repo = $repo;
     }
 
+    /** @return Collection */
     public function getCollection(string $id)
     {
         return $this->sdk->get('collection', $id);
@@ -36,19 +38,34 @@ final class CollectionContents implements Rule
     public function resolveRelations(RuleModel $input): array
     {
         if ($input->getType() !== 'collection') {
+            $this->error($input, 'Invalid rule model, should never happen.');
+
             return [];
         }
         $collection = $this->getCollection($input->getId());
+        $contents = $collection->getContent();
+        $this->debug($input, sprintf('Found (%s) piece(s) of content in collection', $contents->count()));
 
-        return $collection->getContent()
-            ->filter(function ($item) {
-                return $item instanceof Article;
+        return $contents
+            ->filter(function ($item) use ($input) {
+                $isArticle = $item instanceof Article;
+                if (!$isArticle) {
+                    $this->debug($input, sprintf('Skipping non-article of type %s', get_class($item)));
+                }
+
+                return $isArticle;
             })
             ->map(function (Article $article) use ($input) {
-                $type = $article instanceof ExternalArticle ? 'external-article' : 'research-article';
+                $id = $article->getId();
+                $type = $article instanceof ExternalArticle ? 'external-article' : $article->getType();
                 $date = $article instanceof ArticleVersion ? $article->getPublishedDate() : null;
-                // Add collection TO article.
-                return new ManyToManyRelationship(new RuleModel($article->getId(), $type, $date), $input);
+                $relationship = new ManyToManyRelationship(new RuleModel($id, $type, $date), $input);
+                $this->debug($input, sprintf('Found article in content %s<%s>', $type, $id), [
+                    'relationship' => $relationship,
+                    'article' => $article,
+                ]);
+
+                return $relationship;
             })
             ->toArray();
     }

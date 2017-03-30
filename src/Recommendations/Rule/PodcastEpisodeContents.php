@@ -18,6 +18,7 @@ class PodcastEpisodeContents implements Rule
 {
     use PersistRule;
     use RepoRelations;
+    use RuleModelLogger;
 
     private $sdk;
     private $repo;
@@ -44,13 +45,23 @@ class PodcastEpisodeContents implements Rule
                 // Only article for now in this rule.
                 return $content instanceof Article;
             })->map(function (ArticleVersion $article) use ($input, $chapter) {
+                $id = $article->getId();
                 $type = $article instanceof ExternalArticle ? 'external-article' : $article->getType();
                 $date = $article instanceof ArticleVersion ? $article->getPublishedDate() : null;
-                // Link this podcast TO the related item.
-                return new ManyToManyRelationship(
+                $relationship = new ManyToManyRelationship(
                     new RuleModel($article->getId(), $type, $date),
                     new RuleModel("{$input->getId()}-{$chapter->getNumber()}", 'podcast-episode-chapter', null, true)
                 );
+                $this->debug(
+                    $input,
+                    sprintf('Found article %s<%s> in podcast chapter %d', $type, $id, $chapter->getNumber()),
+                    [
+                        'relationship' => $relationship,
+                        'article' => $article,
+                    ]
+                );
+                // Link this podcast TO the related item.
+                return $relationship;
             })->toArray();
         }
 

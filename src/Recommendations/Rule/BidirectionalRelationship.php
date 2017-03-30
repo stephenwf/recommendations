@@ -20,6 +20,7 @@ class BidirectionalRelationship implements Rule
 {
     use PersistRule;
     use RepoRelations;
+    use RuleModelLogger;
 
     private $sdk;
     private $repo;
@@ -63,33 +64,46 @@ class BidirectionalRelationship implements Rule
      */
     public function resolveRelations(RuleModel $input): array
     {
-        $this->logger->debug('Looking for articles related to Article<'.$input->getId().'>');
+        $this->debug($input, 'Looking for related articles');
         try {
             $related = $this->getRelatedArticles($input->getId());
 
             if ($related->count() === 0) {
+                $this->debug($input, 'No related articles found');
+
                 return [];
             }
         } catch (Throwable $e) {
-            $this->logger->error('Article<'.$input->getId().'> threw exception when requesting related articles', [
+            $this->error($input, 'Exception thrown getting related articles', [
                 'exception' => $e,
             ]);
 
             return [];
         }
-        $this->logger->debug('Found related articles ('.$related->count().')');
+        $this->debug($input, sprintf('Found (%d) related article(s)', $related->count()));
 
         return $related
-            ->filter(function ($item) {
-                return $item instanceof Article;
+            ->filter(function ($item) use ($input) {
+                $isArticle = $item instanceof Article;
+                if (!$isArticle) {
+                    $this->debug($input, sprintf('Found unknown article type: %s', get_class($item)), [
+                        'model' => $item,
+                    ]);
+                }
+
+                return $isArticle;
             })
             ->map(function (Article $article) use ($input) {
+                $id = $article->getId();
                 $type = $article instanceof ExternalArticleModel ? 'external-article' : $article->getType();
                 $date = $article instanceof ArticleVersion ? $article->getPublishedDate() : null;
-                // Link this podcast TO the related item.
-                $this->logger->debug('Mapping to relation '.$input->getId());
+                $relationship = new ManyToManyRelationship($input, new RuleModel($article->getId(), $type, $date));
+                $this->debug($input, sprintf('Found related article %s<%s>', $type, $id), [
+                    'relationship' => $relationship,
+                    'article' => $article,
+                ]);
 
-                return new ManyToManyRelationship($input, new RuleModel($article->getId(), $type, $date));
+                return $relationship;
             })
             ->toArray();
     }

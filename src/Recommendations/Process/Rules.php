@@ -16,11 +16,13 @@ use eLife\ApiSdk\Model\PodcastEpisode;
 use eLife\Logging\Monitoring;
 use eLife\Recommendations\Relationships\NoRelationship;
 use eLife\Recommendations\Rule;
+use eLife\Recommendations\Rule\RuleModelLogger;
 use eLife\Recommendations\RuleModel;
 use Psr\Log\LoggerInterface;
 
 final class Rules
 {
+    use RuleModelLogger;
     private $rules;
     private $logger;
     private $monitoring;
@@ -46,12 +48,12 @@ final class Rules
         if ($model instanceof PodcastEpisode) {
             // Import podcast.
             $ruleModel = new RuleModel($model->getNumber(), 'podcast-episode', $model->getPublishedDate());
-            $this->logger->debug("Found $type, assumed PodcastEpisode with number {$model->getNumber()}");
+            $this->debug($ruleModel, sprintf('Found episode %d', $model->getNumber()));
         } elseif (method_exists($model, 'getId') && $type) {
             $published = method_exists($model, 'getPublishedDate') ? $model->getPublishedDate() : null;
             // Import et al.
             $ruleModel = new RuleModel($model->getId(), $type, $published);
-            $this->logger->debug("Found {$type}, with id {$model->getId()}");
+            $this->debug($ruleModel, sprintf('Identified rule model', $type, $model->getId()));
         } else {
             // Not good, not et al.
             $this->logger->alert('Unknown model type', [
@@ -73,20 +75,16 @@ final class Rules
         $all = [];
         foreach ($this->rules as $rule) {
             if ($this->isSupported($model, $rule) === false) {
-                $this->logger->debug('Skipping import for rule '.get_class($rule), [
-                    'model' => $model,
-                ]);
+                $this->debug($model, sprintf('Skipping import for rule %s', get_class($rule)));
                 continue;
             }
             $relations = $rule->resolveRelations($model);
             if (!empty($relations)) {
-                $this->logger->debug('Found relations on model', [
+                $this->debug($model, sprintf('Found %d relation(s) on model', count($relations)), [
                     'relations' => $relations,
                 ]);
             } else {
-                $this->logger->debug('No relations found, upserting', [
-                   'model' => $model,
-                ]);
+                $this->debug($model, 'No relations found, upserting');
                 $relations = [new NoRelationship($model)];
             }
             if ($upsert) {
@@ -97,6 +95,9 @@ final class Rules
             }
             $all = array_merge($all, $relations);
         }
+        $this->debug($model, sprintf('Total of %d relation(s) found', count($all)), [
+            'relations' => $all,
+        ]);
         $this->monitoring->endTransaction();
 
         return $all;
@@ -107,7 +108,7 @@ final class Rules
         $next = [];
         foreach ($this->rules as $rule) {
             $prev = $next;
-            $this->logger->debug('Processing rule: ', ['class' => get_class($rule)]);
+            $this->debug($model, sprintf('Starting rule process %s', get_class($rule)));
             $next = $rule->addRelations($model, $prev);
         }
 

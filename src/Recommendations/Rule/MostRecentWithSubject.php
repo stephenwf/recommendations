@@ -18,6 +18,7 @@ use Psr\Log\LoggerInterface;
 class MostRecentWithSubject implements Rule
 {
     use PersistRule;
+    use RuleModelLogger;
 
     private $sdk;
     private $repo;
@@ -61,7 +62,7 @@ class MostRecentWithSubject implements Rule
             case 'replication-study':
             case 'short-report':
             case 'tools-resources':
-                // end of -- are these needed?
+                // end of -- are these needed? - we will find out in the logs.
             case 'article':
                 return 'article';
                 break;
@@ -73,28 +74,36 @@ class MostRecentWithSubject implements Rule
 
     public function get(RuleModel $input)
     {
-        return $this->sdk->get($this->getType($input->getType()), $input->getId());
+        $type = $this->getType($input->getType());
+        if ($type !== $input->getType()) {
+            $this->debug($input, sprintf('Converting type from % to %', $input->getType(), $type));
+        }
+
+        return $this->sdk->get($type, $input->getId());
     }
 
     public function resolveRelations(RuleModel $input): array
     {
         /** @var HasSubjects $model Added to stop IDE complaining. */
         $model = $this->get($input);
-
         if (!$model instanceof HasSubjects) {
-            $this->logger->debug($input->getType().'<'.$input->getId().'> has no subjects', [
-                'model' => $model,
-            ]);
+            $this->debug($input, 'No subjects found, skipping');
 
             return [];
         }
+        $subjects = $model->getSubjects();
+        $this->debug($input, sprintf('Found (%s) subject(s) on item', $subjects->count()));
 
-        return $model
-            ->getSubjects()
+        $relations = $subjects
             ->map(function (Subject $subject) use ($input) {
-                return new ManyToManyRelationship($input, new RuleModel($subject->getId(), 'subject', null, true));
+                $relation = new ManyToManyRelationship($input, new RuleModel($subject->getId(), 'subject', null, true));
+                $this->debug($input, 'Adding relation for subject', [
+                    'relation' => $relation,
+                ]);
             })
             ->toArray();
+
+        return $relations;
     }
 
     public function addRelations(RuleModel $model, array $list): array

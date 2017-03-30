@@ -23,7 +23,9 @@ final class MostRecent implements Rule
     public function resolveRelations(RuleModel $input): array
     {
         // this particular example does not add any relations.
-        return [];
+        return [
+
+        ];
     }
 
     public function upsert(Relationship $relationship)
