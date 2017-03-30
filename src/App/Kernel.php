@@ -31,6 +31,7 @@ use eLife\Recommendations\Command\PopulateRulesCommand;
 use eLife\Recommendations\Process\Hydration;
 use eLife\Recommendations\Process\Rules;
 use eLife\Recommendations\RecommendationResultDiscriminator;
+use eLife\Recommendations\Response\PrivateResponse;
 use eLife\Recommendations\Rule\BidirectionalRelationship;
 use eLife\Recommendations\Rule\CollectionContents;
 use eLife\Recommendations\Rule\Common\MicroSdk;
@@ -101,7 +102,7 @@ final class Kernel implements MinimalKernel
             'debug' => false,
             'validate' => false,
             'annotation_cache' => true,
-            'ttl' => 3600,
+            'ttl' => 300,
             'process_memory_limit' => 200,
             'file_logs_path' => self::ROOT.'/var/logs',
             'tables' => [
@@ -430,7 +431,7 @@ final class Kernel implements MinimalKernel
             return new JsonResponse(array_filter([
                 'error' => $e->getMessage(),
                 'trace' => $this->app['config']['debug'] ? $e->getTraceAsString() : null,
-            ]), $e->getCode());
+            ]), $e->getCode() ? $e->getCode() : Response::HTTP_INTERNAL_SERVER_ERROR);
         }
         $logger->error('An unknown exception was thrown', [
             'exception' => $e,
@@ -447,7 +448,7 @@ final class Kernel implements MinimalKernel
                 'time' => microtime(true) - $this->startTime,
             ] : [
                 'error' => trim($errorMessage),
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function withApp(callable $fn)
@@ -482,8 +483,6 @@ final class Kernel implements MinimalKernel
                 $json->_validationInfo = $e->getMessage();
                 $json->_time = microtime(true) - $this->startTime;
                 $response->setContent(json_encode($json));
-
-                return $response;
             }
             $this->get('logger')->warning('Invalid JSON provided to user', [
                 'exception' => $e,
@@ -491,9 +490,23 @@ final class Kernel implements MinimalKernel
                 'response' => $response,
             ]);
         }
+
+        return $response;
     }
 
     public function cache(Request $request, Response $response)
     {
+        if ($response instanceof PrivateResponse) {
+            return $response;
+        }
+        $response->setMaxAge($this->app['config']['ttl']);
+        $response->headers->addCacheControlDirective('stale-while-revalidate', $this->app['config']['ttl']);
+        $response->headers->addCacheControlDirective('stale-if-error', 86400);
+        $response->setVary('Accept');
+        $response->setEtag(md5($response->getContent()));
+        $response->setPublic();
+        $response->isNotModified($request);
+
+        return $response;
     }
 }
