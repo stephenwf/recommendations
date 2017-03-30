@@ -100,6 +100,8 @@ class MostRecentWithSubject implements Rule
                 $this->debug($input, 'Adding relation for subject', [
                     'relation' => $relation,
                 ]);
+
+                return $relation;
             })
             ->toArray();
 

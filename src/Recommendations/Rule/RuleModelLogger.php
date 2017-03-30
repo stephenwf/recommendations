@@ -3,7 +3,6 @@
 namespace eLife\Recommendations\Rule;
 
 use eLife\Recommendations\RuleModel;
-use LogicException;
 use Psr\Log\LoggerInterface;
 
 trait RuleModelLogger
@@ -22,7 +21,7 @@ trait RuleModelLogger
     {
         $context['model'] = $ruleModel;
         if (!$this->logger instanceof LoggerInterface) {
-            throw new LogicException('Trait can only be run from class with logger.');
+            return;
         }
         $this->logger->log(
             $level,
