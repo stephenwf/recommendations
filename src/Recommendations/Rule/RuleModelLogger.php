@@ -20,13 +20,12 @@ trait RuleModelLogger
     public function log($level, RuleModel $ruleModel, $message, $context = [])
     {
         $context['model'] = $ruleModel;
-        if (!$this->logger instanceof LoggerInterface) {
-            return;
+        if (property_exists($this, 'logger') && $this->logger instanceof LoggerInterface) {
+            $this->logger->log(
+                $level,
+                sprintf('%s %s<%s> %s', str_replace('eLife\Recommendations\\', '', __CLASS__), $ruleModel->getType(), $ruleModel->getId(), $message),
+                $context
+            );
         }
-        $this->logger->log(
-            $level,
-            sprintf('%s %s<%s> %s', str_replace('eLife\Recommendations\\', '', __CLASS__), $ruleModel->getType(), $ruleModel->getId(), $message),
-            $context
-        );
     }
 }
